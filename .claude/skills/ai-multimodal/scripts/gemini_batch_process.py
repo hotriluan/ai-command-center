@@ -159,6 +159,33 @@ def validate_model_task_combination(model: str, task: str) -> None:
                 )
 
 
+def infer_task_from_file(file_path: str) -> str:
+    """Infer task type from file extension.
+
+    Returns:
+        'transcribe' for audio files
+        'analyze' for image/video/document files
+    """
+    ext = Path(file_path).suffix.lower()
+
+    audio_extensions = {'.mp3', '.wav', '.aac', '.flac', '.ogg', '.aiff', '.m4a'}
+    image_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.gif', '.bmp'}
+    video_extensions = {'.mp4', '.mpeg', '.mov', '.avi', '.flv', '.mpg', '.webm', '.wmv', '.3gpp', '.mkv'}
+    document_extensions = {'.pdf', '.txt', '.html', '.md', '.doc', '.docx'}
+
+    if ext in audio_extensions:
+        return 'transcribe'
+    elif ext in image_extensions:
+        return 'analyze'
+    elif ext in video_extensions:
+        return 'analyze'
+    elif ext in document_extensions:
+        return 'extract'
+
+    # Default to analyze for unknown types
+    return 'analyze'
+
+
 def get_mime_type(file_path: str) -> str:
     """Determine MIME type from file extension."""
     ext = Path(file_path).suffix.lower()
@@ -766,9 +793,9 @@ Examples:
     )
 
     parser.add_argument('--files', nargs='*', help='Input files to process')
-    parser.add_argument('--task', required=True,
+    parser.add_argument('--task',
                        choices=['transcribe', 'analyze', 'extract', 'generate', 'generate-video'],
-                       help='Task to perform')
+                       help='Task to perform (auto-detected from file type if not specified)')
     parser.add_argument('--prompt', help='Prompt for analysis/generation')
     parser.add_argument('--model',
                        help='Model to use (default: auto-detected from task and env vars)')
@@ -797,6 +824,15 @@ Examples:
                        help='Show what would be done without making API calls')
 
     args = parser.parse_args()
+
+    # Auto-detect task from file type if not specified
+    if not args.task:
+        if args.files and len(args.files) > 0:
+            args.task = infer_task_from_file(args.files[0])
+            if args.verbose:
+                print(f"Auto-detected task: {args.task} (from file extension)")
+        else:
+            parser.error("--task required when no input files provided")
 
     # Auto-detect model if not specified
     if not args.model:

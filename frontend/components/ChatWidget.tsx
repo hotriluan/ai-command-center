@@ -44,10 +44,10 @@ export default function ChatWidget() {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
+        <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end font-sans">
             {/* Chat Window */}
             {isOpen && (
-                <div className="mb-4 w-[380px] h-[550px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 ease-out animate-in slide-in-from-bottom-5 fade-in zoom-in-95">
+                <div className="mb-4 w-[380px] h-[600px] max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-500">
                     {/* Header */}
                     <div className="bg-slate-900 p-4 flex justify-between items-center text-white shadow-md">
                         <div className="flex items-center gap-3">
@@ -77,18 +77,16 @@ export default function ChatWidget() {
                             <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                                 <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                                     {/* Avatar */}
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${
-                                        msg.role === 'user' ? 'bg-blue-700 text-white' : 'bg-white border border-slate-200 text-slate-700'
-                                    }`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-blue-700 text-white' : 'bg-white border border-slate-200 text-slate-700'
+                                        }`}>
                                         {msg.role === 'user' ? <User size={14} /> : <Bot size={16} />}
                                     </div>
 
                                     {/* Message Bubble */}
-                                    <div className={`px-4 py-3 text-sm leading-relaxed shadow-sm ${
-                                        msg.role === 'user'
+                                    <div className={`px-4 py-3 text-sm leading-relaxed shadow-sm ${msg.role === 'user'
                                             ? 'bg-blue-700 text-white rounded-2xl rounded-tr-sm'
                                             : 'bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-sm'
-                                    }`}>
+                                        }`}>
                                         {msg.content}
                                     </div>
                                 </div>

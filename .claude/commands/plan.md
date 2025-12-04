@@ -22,7 +22,7 @@ Before delegating to plan subcommands, check for existing active plan:
 `<WORKING-DIR>` = current project's working directory (where Claude was launched or `pwd`).
 
 ## Workflow
-- Analyze the given task and ask for more details if needed.
+- Analyze the given task and use `AskUserQuestion` tool to ask for more details if needed.
 - Decide to use `/plan:fast` or `/plan:hard` SlashCommands based on the complexity.
 - Execute SlashCommand: `/plan:fast <detailed-instructions-prompt>` or `/plan:hard <detailed-instructions-prompt>`
 - Activate `planning` skill.

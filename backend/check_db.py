@@ -1,26 +1,29 @@
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from database import SessionLocal, engine
+from models import SalesData
+from sqlalchemy import text
 
-DATABASE_URL = "sqlite:///./command_center.db"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
-db = SessionLocal()
+def check_db():
+    print("Checking database schema...")
+    with engine.connect() as conn:
+        result = conn.execute(text("PRAGMA table_info(sales_data)"))
+        columns = [row[1] for row in result.fetchall()]
+        print(f"Columns in sales_data: {columns}")
+        
+        if 'billing_qty' in columns:
+            print("✅ billing_qty column EXISTS")
+        else:
+            print("❌ billing_qty column MISSING")
+            
+        # Check for id column
+        if 'id' in columns:
+            print("✅ id column EXISTS")
+        else:
+            print("❌ id column MISSING")
+            
+        # Count rows
+        result = conn.execute(text("SELECT COUNT(*) FROM sales_data"))
+        count = result.fetchone()[0]
+        print(f"Total rows in sales_data: {count}")
 
-try:
-    # Check SalesData count
-    result = db.execute(text("SELECT COUNT(*) FROM sales_data")).scalar()
-    print(f"Total rows in SalesData: {result}")
-
-    # Check sample data
-    if result > 0:
-        sample = db.execute(text("SELECT * FROM sales_data LIMIT 1")).fetchone()
-        print(f"Sample row: {sample}")
-    
-    # Check ChatHistory count (optional, just to see if chat is working too if they used it)
-    chat_count = db.execute(text("SELECT COUNT(*) FROM chat_history")).scalar()
-    print(f"Total chat messages: {chat_count}")
-
-except Exception as e:
-    print(f"Error checking DB: {e}")
-finally:
-    db.close()
+if __name__ == "__main__":
+    check_db()

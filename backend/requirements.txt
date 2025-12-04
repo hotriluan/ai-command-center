@@ -5,3 +5,5 @@ google-generativeai
 sqlalchemy
 pandas
 openpyxl
+python-multipart
+scikit-learn
