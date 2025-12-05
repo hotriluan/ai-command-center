@@ -1,0 +1,175 @@
+﻿======================================================================
+TESTING CHANNEL ANALYSIS SQL QUERY
+======================================================================
+
+--- TEST 1: Total rows in sales_data ---
+Total rows: 0
+
+--- TEST 2: Total rows in product_cost ---
+Total rows: 0
+
+--- TEST 3: Testing NEW SQL Query (year=2024, no semester) ---
+python : Traceback (most recent call last):
+At line:1 char:1
++ python debug_sql.py 2>&1 | Out-File -Encoding UTF8 
+debug_output.txt
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most 
+    recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\base.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\default.py", line 951, in 
+do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such column: s.material_code
+
+The above exception was the direct cause of the following 
+exception:
+
+Traceback (most recent call last):
+  File "C:\dev\ai-command-center\debug_sql.py", line 64, in 
+<module>
+    result = db.execute(sql, {"year": year}).fetchall()
+             ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\orm\session.py", line 2258, in 
+_execute_internal
+    result = conn.execute(
+        statement, params or {}, 
+execution_options=execution_options
+    )
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\sql\elements.py", line 526, in 
+_execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\base.py", line 1641, in 
+_execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\base.py", line 1846, in 
+_execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\base.py", line 1986, in 
+_exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, 
+context
+        
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\base.py", line 2355, in 
+_handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) 
+from e
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\base.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\luanh\AppData\Roaming\Python\Python314\site-
+packages\sqlalchemy\engine\default.py", line 951, in 
+do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) 
+no such column: s.material_code
+[SQL: 
+SELECT 
+    CASE 
+        WHEN CAST(s.dist AS TEXT) LIKE '%11%' THEN 'Industry'
+        WHEN CAST(s.dist AS TEXT) LIKE '%13%' THEN 'Retail'
+        WHEN CAST(s.dist AS TEXT) LIKE '%15%' THEN 'Project'
+        ELSE 'Others' 
+    END as channel_name,
+    
+    SUM(s.net_value) as revenue,
+    
+    -- Profit = Revenue - (Qty * COGS)
+    SUM(s.net_value - (s.billing_qty * COALESCE(pc.cogs, 
+0))) as profit,
+    
+    COUNT(*) as deals
+FROM sales_data s
+LEFT JOIN product_cost pc ON s.material_code = 
+pc.material_code
+WHERE (? IS NULL OR s.year = ?)
+AND 1=1
+GROUP BY 
+    CASE 
+        WHEN CAST(s.dist AS TEXT) LIKE '%11%' THEN 'Industry'
+        WHEN CAST(s.dist AS TEXT) LIKE '%13%' THEN 'Retail'
+        WHEN CAST(s.dist AS TEXT) LIKE '%15%' THEN 'Project'
+        ELSE 'Others' 
+    END
+]
+[parameters: (2024, 2024)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+
+During handling of the above exception, another exception 
+occurred:
+
+Traceback (most recent call last):
+  File "C:\dev\ai-command-center\debug_sql.py", line 75, in 
+<module>
+    print(f"\u274c ERROR: {e}")
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in 
+encode
+    return 
+codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           
+~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character 
+'\u274c' in position 0: character maps to <undefined>

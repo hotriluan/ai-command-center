@@ -8,6 +8,8 @@ import services
 import year_services
 import semester_services
 import import_services
+import analytics_services
+import debt_services
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from database import init_db, SessionLocal
@@ -275,3 +277,120 @@ async def download_missing_cogs_report():
         filename="missing_cogs_report.xlsx",
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+# --- ANALYTICS ENDPOINTS ---
+
+@app.get("/api/analytics/product-matrix")
+def get_product_matrix(year: int = None, semester: int = None, db: Session = Depends(get_db)):
+    """
+    Product Portfolio Matrix - Bubble Chart
+    Returns: Revenue (x), Profit Margin % (y), Quantity (z), Product Name
+    Supports semester filtering: None (whole year), 1 (Jan-Jun), 2 (Jul-Dec)
+    """
+    try:
+        data = analytics_services.get_product_matrix(db, year, semester)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        print(f"Error in product-matrix: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/analytics/target-waterfall")
+def get_target_waterfall(year: int = None, semester: int = None, db: Session = Depends(get_db)):
+    """
+    Target Variance Waterfall Chart
+    Shows how each salesperson contributed to target achievement
+    Supports semester filtering: None (whole year), 1 (Jan-Jun), 2 (Jul-Dec)
+    """
+    try:
+        data = analytics_services.get_target_waterfall(db, year, semester)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        print(f"Error in target-waterfall: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/analytics/seasonality")
+def get_seasonality(year: int = None, semester: int = None, db: Session = Depends(get_db)):
+    """
+    Seasonality Heatmap
+    Returns revenue by Year x Month for pattern analysis
+    Supports semester filtering: None (whole year), 1 (Jan-Jun), 2 (Jul-Dec)
+    """
+    try:
+        data = analytics_services.get_seasonality_heatmap(db, year, semester)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        print(f"Error in seasonality: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/analytics/channel-performance")
+def get_channel_performance(year: int, semester: int = None, db: Session = Depends(get_db)):
+    """
+    Channel Performance Analysis
+    Returns revenue, profit, and margin by distribution channel (Industry, Retail, Project)
+    Includes monthly trend data for stacked visualization
+    """
+    try:
+        data = services.get_channel_performance(db, year, semester)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        print(f"Error in channel-performance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- DEBT & CREDIT CONTROL ENDPOINTS ---
+
+@app.post("/api/import/debt")
+async def import_debt_report(
+    file: UploadFile = File(...),
+    report_date: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Import AR Aging Report (ZRFI005.XLSX)
+    Implements idempotent delete-insert pattern
+    """
+    try:
+        # Use provided date or current date
+        if not report_date:
+            report_date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Read file contents
+        contents = await file.read()
+        
+        # Import data
+        result = debt_services.import_debt_data(contents, db, report_date)
+        
+        return result
+    except Exception as e:
+        print(f"Error importing debt report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/debt/overview")
+def get_debt_overview(report_date: str = None, db: Session = Depends(get_db)):
+    """
+    Get debt overview with KPIs and breakdowns
+    Smart date defaulting: Uses latest report_date if not provided
+    """
+    try:
+        data = debt_services.get_debt_overview(db, report_date)
+        return data
+    except Exception as e:
+        print(f"Error in debt overview: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/debt/top-customers")
+def get_top_debt_customers(report_date: str = None, limit: int = 10, db: Session = Depends(get_db)):
+    """
+    Get top customers by outstanding debt
+    Smart date defaulting: Uses latest report_date if not provided
+    """
+    try:
+        data = debt_services.get_top_debtors(db, report_date, limit)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        print(f"Error in top customers: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

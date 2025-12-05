@@ -1,0 +1,9 @@
+=== DATABASE TABLES ===
+Table: sales_data
+Table: chat_history
+Table: product_cost
+Table: sales_target
+Table: monthly_targets
+
+=== SALES_DATA TABLE INFO ===
+Total rows: 0

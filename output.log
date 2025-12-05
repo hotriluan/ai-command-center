@@ -1,0 +1,19 @@
+﻿============================================================
+LIVE DATABASE CHANNEL INSPECTION
+============================================================
+
+Total rows in sales_data: 0
+
+--- DISTINCT DIST VALUES ---
+
+--- MAPPING TEST ---
+Map keys: ['11', '13', '15']
+Map key types: ['str', 'str', 'str']
+
+--- MAPPING RESULTS ---
+
+--- SAMPLE RECORDS ---
+
+============================================================
+INSPECTION COMPLETE
+============================================================

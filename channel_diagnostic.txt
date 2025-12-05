@@ -1,0 +1,7 @@
+=== DISTINCT DIST VALUES ===
+
+=== MAPPING TEST ===
+Map keys: ['11', '13', '15']
+Map key types: ['str', 'str', 'str']
+
+=== SAMPLE MAPPING ===

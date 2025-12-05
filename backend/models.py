@@ -44,3 +44,31 @@ class SalesTarget(Base):
     semester = Column(Integer, nullable=False) # 1 or 2
     target_amount = Column(Float, nullable=False)
     year = Column(Integer, default=2025, nullable=False)
+
+class MonthlyTarget(Base):
+    __tablename__ = "monthly_targets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_name = Column(String, index=True, nullable=False)
+    year = Column(Integer, nullable=False)
+    month_number = Column(Integer, nullable=False)
+    target_amount = Column(Float, nullable=False)
+    semester = Column(Integer, nullable=False) # 1 or 2
+
+class ARAgingReport(Base):
+    __tablename__ = "ar_aging_report"
+
+    id = Column(Integer, primary_key=True, index=True)
+    report_date = Column(String, nullable=False, index=True)  # YYYY-MM-DD format
+    salesman_name = Column(String, nullable=True)
+    customer_name = Column(String, nullable=False)
+    customer_code = Column(String, nullable=False, index=True)
+    channel = Column(String, nullable=False)  # 'Industry', 'Retail', 'Project', 'Others'
+    total_debt = Column(Float, default=0)
+    total_realization = Column(Float, default=0)
+    debt_1_30 = Column(Float, default=0)
+    debt_31_60 = Column(Float, default=0)
+    debt_61_90 = Column(Float, default=0)
+    debt_91_120 = Column(Float, default=0)
+    debt_121_180 = Column(Float, default=0)
+    debt_over_180 = Column(Float, default=0)

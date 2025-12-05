@@ -22,14 +22,18 @@ const DataImportPage: React.FC = () => {
     const [salesUploading, setSalesUploading] = useState(false);
     const [cogsUploading, setCogsUploading] = useState(false);
     const [targetUploading, setTargetUploading] = useState(false);
+    const [debtUploading, setDebtUploading] = useState(false);
     const [salesResult, setSalesResult] = useState<ImportResult | null>(null);
     const [cogsResult, setCogsResult] = useState<ImportResult | null>(null);
     const [targetResult, setTargetResult] = useState<ImportResult | null>(null);
+    const [debtResult, setDebtResult] = useState<ImportResult | null>(null);
+    const [debtReportDate, setDebtReportDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
     // File input refs
     const salesFileRef = useRef<HTMLInputElement>(null);
     const cogsFileRef = useRef<HTMLInputElement>(null);
     const targetFileRef = useRef<HTMLInputElement>(null);
+    const debtFileRef = useRef<HTMLInputElement>(null);
 
     /**
      * Handle Sales Data Import
@@ -193,8 +197,60 @@ const DataImportPage: React.FC = () => {
     };
 
     /**
-     * Download missing COGS report
+     * Handle Debt Report Import (ZRFI005)
      */
+    const handleDebtImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type (case-insensitive)
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+            setDebtResult({
+                status: 'error',
+                message: 'Please select an Excel file (.xlsx or .xls)'
+            });
+            return;
+        }
+
+        setDebtUploading(true);
+        setDebtResult(null);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('report_date', debtReportDate);
+
+        try {
+            const response = await fetch('http://localhost:8000/api/import/debt', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                setDebtResult({
+                    status: 'success',
+                    message: `Debt report for ${debtReportDate} uploaded successfully`,
+                    rows_imported: result.records_imported
+                });
+            } else {
+                setDebtResult({
+                    status: 'error',
+                    message: result.message || 'Debt import failed'
+                });
+            }
+        } catch (error) {
+            setDebtResult({
+                status: 'error',
+                message: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
+            });
+        } finally {
+            setDebtUploading(false);
+            event.target.value = ''; // Reset input
+        }
+    };
+
     const downloadMissingCogsReport = () => {
         window.open('http://localhost:8000/api/download/missing-cogs-report', '_blank');
     };
@@ -439,6 +495,85 @@ const DataImportPage: React.FC = () => {
                         <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                             <p className="text-sm text-green-800">
                                 <strong>✅ Example:</strong> Use <code className="bg-white px-2 py-1 rounded">demodata/targets.xlsx</code> as reference
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section D: Debt Report (ZRFI005) */}
+                <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-red-100 p-3 rounded-lg">
+                            <FileSpreadsheet className="w-6 h-6 text-red-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900">Upload Debt Report (ZRFI005)</h2>
+                            <p className="text-gray-600 text-sm">AR Aging Report for credit control analysis</p>
+                        </div>
+                    </div>
+
+                    {/* Date Picker */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Report Date (Snapshot Date)
+                        </label>
+                        <input
+                            type="date"
+                            value={debtReportDate}
+                            onChange={(e) => setDebtReportDate(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            This date represents when the debt snapshot was taken
+                        </p>
+                    </div>
+
+                    {/* File Upload */}
+                    <div className="mb-6">
+                        <input
+                            type="file"
+                            ref={debtFileRef}
+                            onChange={handleDebtImport}
+                            accept=".xlsx,.xls"
+                            className="hidden"
+                        />
+                        <button
+                            onClick={() => debtFileRef.current?.click()}
+                            disabled={debtUploading}
+                            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-8 py-4 rounded-lg shadow-md hover:shadow-xl transition-all text-lg font-semibold disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {debtUploading ? (
+                                <>
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                    Processing Debt Report...
+                                </>
+                            ) : (
+                                <>
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                    Upload Debt Report (.xlsx)
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Result Alert */}
+                    {debtResult && renderAlert(debtResult)}
+
+                    {/* Instructions */}
+                    <div className="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-2">📋 Expected File Format (ZRFI005):</h3>
+                        <ul className="text-sm text-gray-700 space-y-1">
+                            <li>• <strong>Distribution Channel</strong> - Channel code (11=Industry, 13=Retail, 15=Project)</li>
+                            <li>• <strong>Customer Code</strong> - Customer code</li>
+                            <li>• <strong>Customer Name</strong> - Customer name</li>
+                            <li>• <strong>Salesman Name</strong> - Salesperson name</li>
+                            <li>• <strong>Total Target</strong> - Total outstanding debt</li>
+                            <li>• <strong>Total Realization</strong> - Total collected amount</li>
+                            <li>• <strong>Target 1-30 Days</strong>, <strong>31-60 Days</strong>, etc. - Aging buckets</li>
+                        </ul>
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                                <strong>💡 Idempotent Import:</strong> Re-uploading the same date will replace existing data for that snapshot.
                             </p>
                         </div>
                     </div>

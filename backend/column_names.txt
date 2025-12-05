@@ -1,0 +1,33 @@
+COLUMN NAMES IN ZRFI005.XLSX:
+============================================================
+ 1. 'Company Code'
+ 2. 'Profit Center'
+ 3. 'Distribution Channel'
+ 4. 'Customer Hirarchy'
+ 5. 'Customer Group'
+ 6. 'Salesman Code'
+ 7. 'Salesman Name'
+ 8. 'Customer Code'
+ 9. 'Customer Name'
+10. 'Currency'
+11. 'Target 1-30 Days'
+12. 'Target 31-60 Days'
+13. 'Target 61 - 90 Days'
+14. 'Target 91 - 120 Days'
+15. 'Target 121 - 180 Days'
+16. 'Target > 180 Days'
+17. 'Total Target'
+18. 'Realization Not Due'
+19. 'Realization 1 - 30 Days'
+20. 'Realization 31 - 60 Days'
+21. 'Realization 61 - 90 Days'
+22. 'Realization 91 - 120 Days'
+23. 'Realization 121 - 180 Days'
+24. 'Realization > 180 Days'
+25. 'Total Realization'
+
+============================================================
+FILE INFO:
+============================================================
+Total rows: 104
+Total columns: 25

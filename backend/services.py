@@ -81,6 +81,68 @@ You are a SQL Expert querying a SQLite database 'command_center.db'.
 2. If user specifies a year (e.g., "2024", "last year"), filter by that year.
 3. If comparing years (e.g., "2024 vs 2025"), query both years separately.
 4. ALWAYS include year in WHERE clause for accurate results.
+
+--- ADVANCED ANALYTICS CONCEPTS ---
+
+**Product Portfolio Matrix:**
+- **Revenue Trap:** A product with HIGH revenue but LOW profit margin (<10%).
+  - Example: Product A sells 50B VND but only 5% margin = 2.5B profit.
+  - Recommendation: Increase price or reduce costs.
+- **Star Products:** High revenue AND high margin (>20%).
+- **Question Starters:** "Which products are revenue traps?", "Show me high-margin products"
+
+**Target Variance Analysis:**
+- **Waterfall Chart:** Shows cumulative effect of each salesperson's variance.
+- **Over-achievers:** Actual > Target (positive variance).
+- **Under-performers:** Actual < Target (negative variance).
+- **Question Starters:** "Who exceeded their targets?", "Target achievement by salesperson"
+
+**Seasonality Patterns:**
+- **Peak Months:** Months with highest revenue (identify patterns).
+- **Low Months:** Months with lowest revenue (plan promotions).
+- **Question Starters:** "What are our peak months?", "Revenue seasonality"
+
+--- TABLE 5: ar_aging_report (Debt & Credit Control) ---
+**Description:** Stores daily snapshots of Account Receivables (Debt) and Collection Performance.
+**CRITICAL:** This table contains HISTORICAL SNAPSHOTS. NEVER sum total_debt across multiple dates.
+
+**Columns:**
+- report_date (TEXT): The date of the snapshot (YYYY-MM-DD).
+- salesman_name (TEXT): Name of the sales staff.
+- customer_name (TEXT): Name of the customer (Debtor).
+- customer_code (TEXT): Customer code.
+- channel (TEXT): Distribution channel ('Industry', 'Retail', 'Project', 'Others').
+- total_debt (REAL): **OUTSTANDING AMOUNT** (Phải thu / Target in Excel).
+- total_realization (REAL): **COLLECTED AMOUNT** (Đã thu / Realization in Excel).
+- debt_1_30 (REAL): Outstanding debt aged 1-30 days.
+- debt_31_60 (REAL): Outstanding debt aged 31-60 days.
+- debt_61_90 (REAL): Outstanding debt aged 61-90 days.
+- debt_91_120 (REAL): Outstanding debt aged 91-120 days.
+- debt_121_180 (REAL): Outstanding debt aged 121-180 days.
+- debt_over_180 (REAL): **BAD DEBT** (overdue > 6 months).
+
+**DEBT QUERY RULES (CRITICAL):**
+
+1. **Snapshot Logic:**
+   - ALWAYS filter by the LATEST DATE unless user specifies a date.
+   - SQL Pattern: `WHERE report_date = (SELECT MAX(report_date) FROM ar_aging_report)`
+   - NEVER sum total_debt across multiple report_date values (it's a snapshot, not cumulative).
+
+2. **Key Calculations:**
+   - **Collection Rate** (Tỷ lệ thu hồi): `total_realization / (total_debt + total_realization) * 100`
+   - **Bad Debt Ratio**: `debt_over_180 / total_debt * 100`
+   - **Overdue Amount**: `debt_61_90 + debt_91_120 + debt_121_180 + debt_over_180`
+
+3. **Segmentation:**
+   - By Channel: `GROUP BY channel`
+   - By Salesman: `GROUP BY salesman_name`
+   - Top Debtors: `SELECT customer_name, total_debt ORDER BY total_debt DESC LIMIT 10`
+
+4. **Question Examples:**
+   - "Tình hình nợ hiện tại?" → `SELECT SUM(total_debt), SUM(total_realization) FROM ar_aging_report WHERE report_date = (SELECT MAX(report_date) FROM ar_aging_report)`
+   - "Kênh nào thu tiền tốt nhất?" → `SELECT channel, SUM(total_realization), SUM(total_debt) FROM ar_aging_report WHERE report_date = (SELECT MAX(report_date) FROM ar_aging_report) GROUP BY channel`
+   - "Top 10 khách hàng nợ nhiều nhất?" → `SELECT customer_name, total_debt FROM ar_aging_report WHERE report_date = (SELECT MAX(report_date) FROM ar_aging_report) ORDER BY total_debt DESC LIMIT 10`
+   - "Nợ quá hạn là bao nhiêu?" → `SELECT SUM(debt_over_180) FROM ar_aging_report WHERE report_date = (SELECT MAX(report_date) FROM ar_aging_report)`
 """
 
 # --- Helper Functions ---
@@ -383,7 +445,7 @@ def get_dashboard_stats(db: Session):
             
         # 4. Top Products (by description column)
         if 'description' in df.columns:
-            prod_data = df.groupby('description')['net_value'].sum().nlargest(5).reset_index()
+            prod_data = df.groupby('description')['net_value'].sum().nlargest(10).reset_index()
             charts_data["top_products"] = [
                 {"name": r['description'], "value": float(r['net_value'])} 
                 for _, r in prod_data.iterrows()
@@ -393,7 +455,7 @@ def get_dashboard_stats(db: Session):
             
         # 5. Top Salesmen (by salesman_name column)
         if 'salesman_name' in df.columns:
-            sales_data = df.groupby('salesman_name')['net_value'].sum().nlargest(5).reset_index()
+            sales_data = df.groupby('salesman_name')['net_value'].sum().nlargest(10).reset_index()
             charts_data["top_salesmen"] = [
                 {"name": r['salesman_name'], "value": float(r['net_value'])} 
                 for _, r in sales_data.iterrows()
@@ -623,3 +685,134 @@ def process_chat(question: str, db: Session):
         print(f"--- [FATAL ERROR] SQL/Gemini Failed: {e} ---")
         traceback.print_exc() # Show full trace in terminal
         return {"answer": f"Lỗi kỹ thuật: {str(e)}. Vui lòng kiểm tra Terminal."}
+
+
+# --- 5. CHANNEL PERFORMANCE ANALYSIS ---
+
+def get_channel_performance(db: Session, year: int, semester: int = None):
+    """
+    Get channel performance analysis with SQL-SIDE MAPPING & DYNAMIC PROFIT
+    Aggregates sales data by distribution channel (Industry, Retail, Project)
+    Uses SQL CASE WHEN for robust mapping and Revenue - (Qty * COGS) for profit
+    """
+    try:
+        # Logic to handle semester filter
+        semester_condition = "1=1"
+        if semester == 1:
+            semester_condition = "s.month_number <= 6"
+        elif semester == 2:
+            semester_condition = "s.month_number > 6"
+
+        # SQL query - dist column already contains channel names
+        # No mapping needed, just use dist directly
+        sql = text(f"""
+        SELECT 
+            s.dist as channel_name,
+            SUM(s.net_value) as revenue,
+            SUM(s.profit) as profit,
+            COUNT(*) as deals
+        FROM sales_data s
+        WHERE (:year IS NULL OR s.year = :year)
+        AND {semester_condition}
+        GROUP BY s.dist
+        """)
+        
+        # Execution
+        result = db.execute(sql, {"year": year}).fetchall()
+        
+        if not result:
+            return {
+                "overview": [],
+                "monthly_trend": [],
+                "radar_data": []
+            }
+            
+        # Process result directly
+        overview_list = []
+        for row in result:
+            channel_name = row[0]
+            revenue = float(row[1] or 0)
+            profit = float(row[2] or 0)
+            deals = int(row[3] or 0)
+            margin = (profit / revenue * 100) if revenue != 0 else 0
+            
+            overview_list.append({
+                "channel": channel_name,
+                "revenue": revenue,
+                "profit": profit,
+                "margin": margin,
+                "deals": deals
+            })
+            
+        # Calculate monthly trend - dist already contains channel names
+        monthly_sql = text(f"""
+        SELECT 
+            s.month_number,
+            s.dist as channel_name,
+            SUM(s.net_value) as revenue
+        FROM sales_data s
+        WHERE (:year IS NULL OR s.year = :year)
+        AND {semester_condition}
+        GROUP BY s.month_number, s.dist
+        ORDER BY s.month_number
+        """)
+        
+        monthly_result = db.execute(monthly_sql, {"year": year}).fetchall()
+        
+        # Process monthly trend
+        monthly_data = {}
+        for row in monthly_result:
+            month = int(row[0])
+            channel = row[1]
+            revenue = float(row[2] or 0)
+            
+            if month not in monthly_data:
+                monthly_data[month] = {"month": month, "Industry": 0, "Retail": 0, "Project": 0, "Others": 0}
+            
+            if channel in monthly_data[month]:
+                monthly_data[month][channel] = revenue
+                
+        monthly_trend = sorted(monthly_data.values(), key=lambda x: x['month'])
+        
+        # Prepare radar chart data (normalized metrics for comparison)
+        radar_data = []
+        if len(overview_list) > 0:
+            # Find max values for normalization
+            max_revenue = max([ch['revenue'] for ch in overview_list]) if overview_list else 0
+            max_profit = max([ch['profit'] for ch in overview_list]) if overview_list else 0
+            max_deals = max([ch['deals'] for ch in overview_list]) if overview_list else 0
+            
+            for ch in overview_list:
+                radar_data.append({
+                    "channel": ch['channel'],
+                    "Revenue": round((ch['revenue'] / max_revenue * 100) if max_revenue > 0 else 0, 1),
+                    "Profit": round((ch['profit'] / max_profit * 100) if max_profit > 0 else 0, 1),
+                    "Volume": round((ch['deals'] / max_deals * 100) if max_deals > 0 else 0, 1)
+                    # Margin removed - shown in KPI cards and table instead
+                })
+        
+        return {
+            "overview": overview_list,
+            "monthly_trend": monthly_trend,
+            "radar_data": radar_data
+        }
+        
+    except Exception as e:
+        print(f"Error in get_channel_performance: {e}")
+        traceback.print_exc()
+        return {
+            "overview": [],
+            "monthly_trend": [],
+            "radar_data": []
+        }
+        
+    except Exception as e:
+        print(f"Error in get_channel_performance: {e}")
+        traceback.print_exc()
+        return {
+            "overview": [],
+            "monthly_trend": [],
+            "radar_data": []
+        }
+
+

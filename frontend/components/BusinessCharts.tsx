@@ -137,10 +137,10 @@ const BusinessCharts: React.FC<BusinessChartsProps> = ({ charts }) => {
             {/* Secondary Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Top Products Chart */}
-                <section className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow" aria-label="Top 5 Best-Selling Products">
+                <section className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow" aria-label="Top 10 Best-Selling Products">
                     <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-gray-800">
                         <ShoppingBag size={22} className="text-amber-500" />
-                        Top 5 Best-Selling Products
+                        Top 10 Best-Selling Products
                     </h3>
                     <div className="h-64" role="img" aria-label="Horizontal bar chart showing top 5 products by revenue">
                         <ResponsiveContainer width="100%" height="100%">
@@ -174,10 +174,10 @@ const BusinessCharts: React.FC<BusinessChartsProps> = ({ charts }) => {
                 </section>
 
                 {/* Top Salesmen Chart */}
-                <section className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow" aria-label="Top 5 Salesmen by Performance">
+                <section className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow" aria-label="Top 10 Salesmen by Performance">
                     <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-gray-800">
                         <Users size={22} className="text-purple-500" />
-                        Top 5 Salesmen
+                        Top 10 Salesmen
                     </h3>
                     <div className="h-64" role="img" aria-label="Horizontal bar chart showing top 5 salesmen by revenue">
                         <ResponsiveContainer width="100%" height="100%">
