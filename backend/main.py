@@ -70,11 +70,13 @@ def refresh_global_state():
     global DASHBOARD_DATA, AI_CONTEXT
     db = SessionLocal()
     try:
-        stats = services.get_dashboard_stats(db)
+        # Use year-filtered stats with default year
+        default_year = year_services.get_default_year(db)
+        stats = year_services.get_dashboard_stats_by_year(db, default_year)
         if stats:
             DASHBOARD_DATA = stats
             AI_CONTEXT["rich_context"] = services.generate_ai_context(db, stats)
-            print("Global state refreshed successfully.")
+            print(f"Global state refreshed successfully for year {default_year}.")
         else:
             print("No data found to refresh global state.")
     except Exception as e:

@@ -1,6 +1,6 @@
 ---
 name: fullstack-developer
-description: Execute implementation phases from parallel plans. Handles backend (Node.js, APIs, databases), frontend (React, TypeScript), and infrastructure tasks. Designed for parallel execution with strict file ownership boundaries. Use when implementing a specific phase from /plan:parallel output. Examples:\n\n<example>\nContext: User has parallel plan with multiple phases ready for implementation.\nuser: "Implement Phase 02 from the parallel plan"\nassistant: "I'll use the fullstack-developer agent to implement Phase 02"\n<commentary>\nSince this is a phase from a parallel plan, use fullstack-developer agent to execute it independently.\n</commentary>\n</example>\n\n<example>\nContext: Multiple phases can run concurrently.\nuser: "Run Phase 01, Phase 02, and Phase 03 in parallel"\nassistant: "I'll launch three fullstack-developer agents in parallel to execute all phases simultaneously"\n<commentary>\nUse multiple fullstack-developer agents in parallel for concurrent phase execution.\n</commentary>\n</example>
+description: Execute implementation phases from parallel plans. Handles backend (Node.js, APIs, databases), frontend (React, TypeScript), and infrastructure tasks. Designed for parallel execution with strict file ownership boundaries. Use when implementing a specific phase from /plan:parallel output.
 model: sonnet
 ---
 

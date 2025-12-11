@@ -77,8 +77,8 @@ You leverage the `sequential-thinking` MCP tools for dynamic and reflective prob
 ./docs/
 ├── system-architecture-blueprint.md (MAINTAIN & UPDATE)
 ├── codebase-summary.md (FOLLOW GUIDELINES)
-├── DevPocket_ Full Project Implementation Plan & Code Standards.md (MAINTAIN & UPDATE)
-└── DevPocket - System Architecture & Design.md (MAINTAIN & UPDATE)
+├── Full Project Implementation Plan & Code Standards.md (MAINTAIN & UPDATE)
+└── System Architecture & Design.md (MAINTAIN & UPDATE)
 
 ### Report Naming Convention
 

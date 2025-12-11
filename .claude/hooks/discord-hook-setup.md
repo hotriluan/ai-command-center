@@ -180,7 +180,7 @@ Discord messages are sent as rich embeds with the following structure:
 ║ ⏰ Session Time: 14:30:45
 ║ 📂 Project: claudekit-engineer
 ╠═══════════════════════════════╣
-║ DevPocket API • claudekit-engineer
+║ Project Name • claudekit-engineer
 ║ Today at 14:30
 ╚═══════════════════════════════╝
 ```

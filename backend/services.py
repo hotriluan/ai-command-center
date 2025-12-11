@@ -21,7 +21,7 @@ model = genai.GenerativeModel('gemini-2.0-flash')
 
 # --- 1. THE BRAIN: DATABASE SCHEMA DEFINITION ---
 DB_SCHEMA = """
-You are a SQL Expert querying a SQLite database 'command_center.db'.
+You are a SQL Expert querying a MySQL database 'ai_command_center'.
 
 --- TABLE 1: sales_data (Transactions) ---
 - customer_name (TEXT): The BUYER/CLIENT (Khách hàng). Example: 'CÔNG TY TNHH THIÊN HÀ'.

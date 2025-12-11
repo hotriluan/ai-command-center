@@ -12,6 +12,42 @@
 
 const fs = require('fs');
 const os = require('os');
+const path = require('path');
+const { execSync } = require('child_process');
+
+function getGitRemoteUrl() {
+  try {
+    const url = execSync('git config --get remote.origin.url', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+
+    return url || 'Not available';
+  } catch (error) {
+    return 'Not available';
+  }
+
+function getPythonVersion() {
+  const commands = ['python3 --version', 'python --version'];
+
+  for (const cmd of commands) {
+    try {
+      const output = execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] })
+        .toString()
+        .trim();
+
+      if (output) {
+        return output;
+      }
+    } catch (error) {
+      // Try next command
+    }
+  }
+
+  return 'Not available';
+}
+}
 
 /**
  * Check if reminder was recently injected by scanning transcript
@@ -65,26 +101,36 @@ async function main() {
     const cpuUsage = Math.round((process.cpuUsage().user / 1000000) * 100);
     const cpuSystem = Math.round((process.cpuUsage().system / 1000000) * 100);
 
+    const currentUser =
+      process.env.USERNAME || process.env.USER || process.env.LOGNAME || os.userInfo().username;
+    const gitRemoteUrl = getGitRemoteUrl();
+    const pythonVersion = getPythonVersion();
+    const nodeVersion = process.version || 'Not available';
+
     const reminder = [
       `## Current environment`,
       `- Date time: ${new Date().toLocaleString()}`,
       `- Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+      `- Claude Code settings directory: ${path.resolve(__dirname, "..")}`,
       `- Working directory: ${process.cwd()}`,
+      `- Git: ${gitRemoteUrl}`,
+      `- Node: ${nodeVersion}`,
+      `- Python: ${pythonVersion}`,
       `- OS: ${process.platform}`,
-      `- User: ${process.env.USERNAME}`,
+      `- User: ${currentUser}`,
       `- Locale: ${process.env.LANG}`,
       `- Memory usage: ${memUsed}MB/${memTotal}MB (${memPercent}%)`,
       `- CPU usage: ${cpuUsage}% user / ${cpuSystem}% system`,
       `- IMPORTANT: Include these environment information when prompting subagents to perform tasks.`,
       ``,
       `## Rules`,
-      `- Read and follow development rules: ".claude/workflows/development-rules.md"`,
-      `- Read and follow documentation management: ".claude/workflows/documentation-management.md"`,
+      `- Read and follow development rules in project directory: ".claude/workflows/development-rules.md"`,
+      `- Read and follow documentation management in project directory: ".claude/workflows/documentation-management.md"`,
       `- Markdown files are organized in: Plans → "plans/" directory, Docs → "docs/" directory`,
-      `- Report markdown files in the same directory as the plan file`,
-      `- IMPORTANT: DO NOT create markdown files out of "plans/" or "docs/" directories UNLESS the user explicitly requests it.`,
-      `- Activate skills: Run \`python .claude/scripts/generate_catalogs.py --skills\` to generate a skills catalog and analyze it, then activate the relevant skills that are needed for the task during the process.`,
-      `- Execute commands: Run \`python .claude/scripts/generate_catalogs.py --commands\` to generate a commands catalog and analyze it, then execute the relevant SlashCommands that are needed for the task during the process.`,
+      `- Report markdown files in the same directory as the plan file in project directory`,
+      `- **IMPORTANT:** DO NOT create markdown files out of "plans/" or "docs/" directories UNLESS the user explicitly requests it.`,
+      `- Activate skills (auto detect user-scope or project-scope): Run \`python .claude/scripts/generate_catalogs.py --skills\` to generate a skills catalog and analyze it, then activate the relevant skills that are needed for the task during the process.`,
+      `- Execute commands (auto detect user-scope or project-scope): Run \`python .claude/scripts/generate_catalogs.py --commands\` to generate a commands catalog and analyze it, then execute the relevant SlashCommands that are needed for the task during the process.`,
       `- When skills' scripts are failed to execute, always fix them and run again, repeat until success.`,
       `- Follow **YANGI (You Aren't Gonna Need It) - KISS (Keep It Simple, Stupid) - DRY (Don't Repeat Yourself)** principles`,
       `- Sacrifice grammar for the sake of concision when writing reports.`,

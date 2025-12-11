@@ -81,7 +81,7 @@ def import_sales_data(file_contents: bytes, db: Session):
         print("\n[STEP 4] Checking for existing records...")
         
         existing_query = text("""
-            SELECT billing_document || '_' || billing_item as unique_key
+            SELECT CONCAT(billing_document, '_', billing_item) as unique_key
             FROM sales_data
             WHERE billing_document IS NOT NULL 
             AND billing_item IS NOT NULL

@@ -7,3 +7,5 @@ pandas
 openpyxl
 python-multipart
 scikit-learn
+mysql-connector-python
+pymysql

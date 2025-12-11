@@ -87,7 +87,7 @@ case "$HOOK_TYPE" in
         TOTAL_TOOLS=$(echo "$INPUT" | jq '.toolsUsed | length')
         
         # Build summary message
-        MESSAGE="🚀 *DevPocket Task Completed*
+        MESSAGE="🚀 *Project Task Completed*
         
 📅 *Time:* ${TIMESTAMP}
 📁 *Project:* ${PROJECT_NAME}
@@ -127,7 +127,7 @@ None"
         
     "SubagentStop")
         SUBAGENT_TYPE=$(echo "$INPUT" | jq -r '.subagentType // "unknown"')
-        MESSAGE="🤖 *DevPocket Subagent Completed*
+        MESSAGE="🤖 *Project Subagent Completed*
 
 📅 *Time:* ${TIMESTAMP}
 📁 *Project:* ${PROJECT_NAME}
@@ -140,7 +140,7 @@ Specialized agent completed its task.
         ;;
         
     *)
-        MESSAGE="📝 *DevPocket Code Event*
+        MESSAGE="📝 *Project Code Event*
 
 📅 *Time:* ${TIMESTAMP}
 📁 *Project:* ${PROJECT_NAME}

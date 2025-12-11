@@ -61,7 +61,7 @@ send_discord_embed() {
         "color": $color,
         "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
         "footer": {
-            "text": "DevPocket API • ${PROJECT_NAME}"
+            "text": "Project Name • ${PROJECT_NAME}"
         },
         "fields": $fields
     }]

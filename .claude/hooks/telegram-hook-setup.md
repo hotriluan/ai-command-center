@@ -246,7 +246,7 @@ Check your Telegram chat for the test notification.
 
 **Example notification:**
 ```
-🚀 DevPocket Task Completed
+🚀 Project Task Completed
 
 📅 Time: 2025-10-22 14:30:45
 📁 Project: claudekit-engineer
@@ -287,7 +287,7 @@ Files Modified:
 
 **Example notification:**
 ```
-🤖 DevPocket Subagent Completed
+🤖 Project Subagent Completed
 
 📅 Time: 2025-10-22 14:35:20
 📁 Project: claudekit-engineer
@@ -303,7 +303,7 @@ Specialized agent completed its task.
 
 ### Basic Implementation Task
 ```
-🚀 DevPocket Task Completed
+🚀 Project Task Completed
 
 📅 Time: 2025-10-22 10:15:30
 📁 Project: api-server
@@ -327,7 +327,7 @@ Files Modified:
 
 ### Complex Feature Development
 ```
-🚀 DevPocket Task Completed
+🚀 Project Task Completed
 
 📅 Time: 2025-10-22 15:45:22
 📁 Project: frontend-app
@@ -357,7 +357,7 @@ Files Modified:
 
 ### Subagent Completion
 ```
-🤖 DevPocket Subagent Completed
+🤖 Project Subagent Completed
 
 📅 Time: 2025-10-22 11:20:15
 📁 Project: microservice

@@ -13,7 +13,12 @@ Usage:
 
 import sys
 import re
+import io
 from pathlib import Path
+
+# Fix Windows console encoding for Unicode characters
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 
 # Task keyword mappings for intent detection
