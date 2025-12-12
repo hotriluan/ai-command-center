@@ -491,6 +491,7 @@ const AnalyticsPage: React.FC = () => {
                                 {/* Row 1: Channel Overview Cards */}
                                 <div className="grid grid-cols-3 gap-6 mb-6">
                                     {channelData.overview
+                                        .slice()
                                         .sort((a, b) => {
                                             const order = ['Industry', 'Retail', 'Project'];
                                             return order.indexOf(a.channel) - order.indexOf(b.channel);
@@ -576,6 +577,7 @@ const AnalyticsPage: React.FC = () => {
                                             </thead>
                                             <tbody>
                                                 {channelData.overview
+                                                    .slice()
                                                     .sort((a, b) => {
                                                         const order = ['Industry', 'Retail', 'Project'];
                                                         return order.indexOf(a.channel) - order.indexOf(b.channel);
@@ -613,7 +615,7 @@ const AnalyticsPage: React.FC = () => {
                                                         {(() => {
                                                             const totalRevenue = channelData.overview.reduce((sum, ch) => sum + ch.revenue, 0);
                                                             const totalProfit = channelData.overview.reduce((sum, ch) => sum + ch.profit, 0);
-                                                            const avgMargin = (totalProfit / totalRevenue * 100);
+                                                            const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
                                                             return avgMargin.toFixed(0);
                                                         })()}%
                                                     </td>
@@ -771,13 +773,13 @@ const AnalyticsPage: React.FC = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {debtData.channel_breakdown
+                                                {[...debtData.channel_breakdown]
                                                     .sort((a, b) => {
                                                         const order = ['Industry', 'Retail', 'Project', 'Others'];
                                                         return order.indexOf(a.channel) - order.indexOf(b.channel);
                                                     })
                                                     .map((channel) => {
-                                                        const collectionRate = ((channel.collected / channel.outstanding) * 100);
+                                                        const collectionRate = channel.outstanding > 0 ? ((channel.collected / channel.outstanding) * 100) : 0;
                                                         const fullFormatter = new Intl.NumberFormat('vi-VN', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 });
                                                         return (
                                                             <tr key={channel.channel} className="border-t border-gray-200 hover:bg-gray-50">
@@ -807,7 +809,7 @@ const AnalyticsPage: React.FC = () => {
                                                         {(() => {
                                                             const totalOutstanding = debtData.channel_breakdown.reduce((sum, ch) => sum + ch.outstanding, 0);
                                                             const totalCollected = debtData.channel_breakdown.reduce((sum, ch) => sum + ch.collected, 0);
-                                                            const grandCollectionRate = ((totalCollected / totalOutstanding) * 100);
+                                                            const grandCollectionRate = totalOutstanding > 0 ? ((totalCollected / totalOutstanding) * 100) : 0;
                                                             return grandCollectionRate.toFixed(0);
                                                         })()}%
                                                     </td>

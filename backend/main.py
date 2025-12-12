@@ -393,6 +393,22 @@ def get_top_debt_customers(report_date: str = None, limit: int = 10, db: Session
         print(f"Error in top customers: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/debt/available-dates")
+def get_available_debt_dates(db: Session = Depends(get_db)):
+    """
+    Get list of available AR Snapshot dates
+    """
+    try:
+        dates = debt_services.get_available_dates(db)
+        default_date = dates[0] if dates else None
+        return {
+            "dates": dates,
+            "default_date": default_date
+        }
+    except Exception as e:
+        print(f"Error getting available dates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
