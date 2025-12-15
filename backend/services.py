@@ -201,7 +201,8 @@ def process_upload_sales(file_contents: bytes, db: Session):
 
         # Load Cost Map for Profit Calculation
         costs = db.query(ProductCost).all()
-        cost_map = {c.description: c.cogs for c in costs}
+        # Filter out any None values that might be in the query result
+        cost_map = {c.description: c.cogs for c in costs if c is not None}
         
         # Calculate Profit & Marketing
         def calculate_row(row):

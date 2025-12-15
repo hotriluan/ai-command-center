@@ -148,7 +148,8 @@ def import_sales_data(file_contents: bytes, db: Session):
         
         from models import ProductCost
         cogs_records = db.query(ProductCost).all()
-        cogs_map = {record.description: record.cogs for record in cogs_records}
+        # Filter out any None values that might be in the query result
+        cogs_map = {record.description: record.cogs for record in cogs_records if record is not None}
         
         def calculate_profit(row):
             revenue = row.get('net_value', 0) or 0
@@ -256,6 +257,8 @@ def import_cogs_data(file_contents: bytes, db: Session):
                 new_cost = ProductCost(description=description, cogs=cogs)
                 db.add(new_cost)
             
+            # Flush after each record to avoid batch sorting issues with None primary keys
+            db.flush()
             count += 1
         
         db.commit()
