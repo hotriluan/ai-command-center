@@ -116,18 +116,13 @@ Your summary reports will include:
 
 ## Report Output
 
-### Location Resolution
-1. Read `<WORKING-DIR>/.claude/active-plan` to get current plan path
-2. If exists and valid: write reports to `{active-plan}/reports/`
-3. If not exists: use `plans/reports/` fallback
-
-`<WORKING-DIR>` = current project's working directory (where Claude was launched or `pwd`).
+Check "Plan Context" section above for `Reports Path`. Use that path, or `plans/reports/` as fallback.
 
 ### File Naming
-`docs-manager-{YYMMDD}-{topic-slug}.md`
+`docs-manager-{date}-{topic-slug}.md`
 
-For inter-agent handoff reports: `{YYMMDD}-from-{agent}-to-{agent}-{task}.md`
+For inter-agent handoff reports: `{date}-from-{agent}-to-{agent}-{task}.md`
 
-**Note:** Use `date +%y%m%d` to generate YYMMDD dynamically.
+**Note:** `{date}` format injected by session hooks (`$CK_PLAN_DATE_FORMAT`).
 
 You are meticulous about accuracy, passionate about clarity, and committed to creating documentation that empowers developers to work efficiently and effectively. Every piece of documentation you create or update should reduce cognitive load and accelerate development velocity.

@@ -4,7 +4,7 @@ argument-hint: [category|command|task description]
 ---
 
 Think harder.
-All-in-one ClaudeKit guide. Run the script and enhance output for user.
+All-in-one ClaudeKit guide. Run the script and present output based on type markers.
 
 ## Pre-Processing
 
@@ -20,53 +20,91 @@ The Python script only understands English keywords. If `$ARGUMENTS` is in anoth
 python .claude/scripts/ck-help.py "$ARGUMENTS"
 ```
 
-## Presentation Guidelines
+## Output Type Detection
 
-After running the script, present the output with these enhancements:
+The script outputs a type marker on the first line: `@CK_OUTPUT_TYPE:<type>`
 
-**1. Add Context When Helpful**
-- If user seems new, add a brief welcome
-- If user searched for something not found, suggest alternatives
-- If showing a category, mention how to dive deeper
+**Read this marker and adjust your presentation accordingly:**
 
-**2. Make It Conversational**
-- Don't just dump output - introduce it naturally
-- Example: "Here are the fix commands:" then show the list
-- End with actionable next step: "Try `/fix your-issue` to get started"
+### `@CK_OUTPUT_TYPE:comprehensive-docs`
 
-**3. Offer Follow-Up**
-After showing results, offer relevant next actions:
-- Overview → "Want to explore a category? Just say which one"
-- Category → "Need details on a specific command?"
-- Command → "Ready to use it? Just type the command"
-- Search → "Want me to explain any of these?"
+Full documentation (config, schema, setup guides).
 
-**4. Adapt to User Intent**
-- Quick lookup → Be brief, just the essentials
-- Learning/exploring → Add context and examples
-- Problem-solving → Focus on workflow, skip the overview
+**Presentation:**
+1. Show the **COMPLETE** script output verbatim - every section, every code block
+2. **THEN ADD** helpful context:
+   - Real-world usage examples ("For example, if you're working on multiple projects...")
+   - Common gotchas and tips ("Watch out for: ...")
+   - Practical scenarios ("This is useful when...")
+3. End with a specific follow-up question
 
-**5. Handle Edge Cases Gracefully**
-- No results? Suggest similar commands or categories
-- Typo detected? Ask "Did you mean X?"
-- Empty input? Show overview with friendly intro
+**Example enhancement after showing full output:**
+```
+## Additional Tips
 
-## Example Interactions
+**When to use global vs local config:**
+- Use global (~/.claude/.ck.json) for personal preferences like language, issue prefix style
+- Use local (./.claude/.ck.json) for project-specific paths, naming conventions
 
-**User:** `/ck-help`
-**You:** Here's an overview of ClaudeKit commands:
-[script output]
-What would you like to explore?
+**Common setup for teams:**
+Each team member sets their locale globally, but projects share local config via git.
 
-**User:** `/ck-help fix`
-**You:** Here's the fixing workflow:
-[script output]
-Which issue are you dealing with?
+Need help setting up a specific configuration?
+```
 
-**User:** `/ck-help add login page`
-**You:** For building a login page, I'd recommend:
-[script output]
-Try `/cook add login page` to implement directly, or `/plan add login page` then `/code` for explicit planning first.
+### `@CK_OUTPUT_TYPE:category-guide`
+
+Workflow guides for command categories (fix, plan, cook, etc.).
+
+**Presentation:**
+1. Show the complete workflow and command list
+2. **ADD** practical context:
+   - When to use this workflow vs alternatives
+   - Real example: "If you encounter a bug in authentication, start with..."
+   - Transition tips between commands
+3. Offer to help with a specific task
+
+### `@CK_OUTPUT_TYPE:command-details`
+
+Single command documentation.
+
+**Presentation:**
+1. Show full command info from script
+2. **ADD**:
+   - Concrete usage example with realistic input
+   - When this command shines vs alternatives
+   - Common flags or variations
+3. Offer to run the command for them
+
+### `@CK_OUTPUT_TYPE:search-results`
+
+Search matches for a keyword.
+
+**Presentation:**
+1. Show all matches from script
+2. **HELP** user navigate:
+   - Group by relevance if many results
+   - Suggest most likely match based on context
+   - Offer to explain any specific command
+3. Ask what they're trying to accomplish
+
+### `@CK_OUTPUT_TYPE:task-recommendations`
+
+Task-based command suggestions.
+
+**Presentation:**
+1. Show recommended commands from script
+2. **EXPLAIN** the reasoning:
+   - Why these commands fit the task
+   - Suggested order of execution
+   - What each step accomplishes
+3. Offer to start with the first recommended command
+
+## Key Principle
+
+**Script output = foundation. Your additions = value-add.**
+
+Never replace or summarize the script output. Always show it fully, then enhance with your knowledge and context.
 
 ## Important: Correct Workflows
 

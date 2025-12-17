@@ -23,10 +23,12 @@ const DataImportPage: React.FC = () => {
     const [cogsUploading, setCogsUploading] = useState(false);
     const [targetUploading, setTargetUploading] = useState(false);
     const [debtUploading, setDebtUploading] = useState(false);
+    const [productionUploading, setProductionUploading] = useState(false); // NEW
     const [salesResult, setSalesResult] = useState<ImportResult | null>(null);
     const [cogsResult, setCogsResult] = useState<ImportResult | null>(null);
     const [targetResult, setTargetResult] = useState<ImportResult | null>(null);
     const [debtResult, setDebtResult] = useState<ImportResult | null>(null);
+    const [productionResult, setProductionResult] = useState<ImportResult | null>(null); // NEW
     const [debtReportDate, setDebtReportDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
     // File input refs
@@ -34,6 +36,62 @@ const DataImportPage: React.FC = () => {
     const cogsFileRef = useRef<HTMLInputElement>(null);
     const targetFileRef = useRef<HTMLInputElement>(null);
     const debtFileRef = useRef<HTMLInputElement>(null);
+    const productionFileRef = useRef<HTMLInputElement>(null); // NEW
+
+    /**
+     * Handle Production Order Import (NEW)
+     */
+    const handleProductionImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+            setProductionResult({
+                status: 'error',
+                message: 'Please select an Excel file (.xlsx or .xls)'
+            });
+            return;
+        }
+
+        setProductionUploading(true);
+        setProductionResult(null);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('http://localhost:8000/api/import/production', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                setProductionResult({
+                    status: 'success',
+                    message: result.message || 'Production orders imported successfully',
+                    rows_imported: result.imported_new,
+                    rows_updated: result.updated_existing, // Support update feedback
+                });
+            } else {
+                setProductionResult({
+                    status: 'error',
+                    message: result.message || 'Production import failed'
+                });
+            }
+        } catch (error) {
+            setProductionResult({
+                status: 'error',
+                message: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
+            });
+        } finally {
+            setProductionUploading(false);
+            event.target.value = ''; // Reset input
+        }
+    };
 
     /**
      * Handle Sales Data Import
@@ -43,7 +101,8 @@ const DataImportPage: React.FC = () => {
         if (!file) return;
 
         // Validate file type
-        if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
             setSalesResult({
                 status: 'error',
                 message: 'Please select an Excel file (.xlsx or .xls)'
@@ -102,7 +161,8 @@ const DataImportPage: React.FC = () => {
         if (!file) return;
 
         // Validate file type
-        if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
             setCogsResult({
                 status: 'error',
                 message: 'Please select an Excel file (.xlsx or .xls)'
@@ -151,7 +211,8 @@ const DataImportPage: React.FC = () => {
         if (!file) return;
 
         // Validate file type
-        if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls') && !fileName.endsWith('.csv')) {
             setTargetResult({
                 status: 'error',
                 message: 'Please select an Excel or CSV file (.xlsx, .xls, or .csv)'
@@ -372,8 +433,77 @@ const DataImportPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Section B: Update COGS */}
-                <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+                {/* Section B: Import Production Orders */}
+                <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-blue-100 p-3 rounded-lg">
+                            <FileSpreadsheet className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900">Upload Production Orders</h2>
+                            <p className="text-gray-600 text-sm">Import CO0ISPI report for production analysis</p>
+                        </div>
+                    </div>
+
+                    {/* File Upload */}
+                    <div className="mb-6">
+                        <input
+                            type="file"
+                            ref={productionFileRef}
+                            onChange={handleProductionImport}
+                            accept=".xlsx,.xls"
+                            className="hidden"
+                        />
+                        <button
+                            onClick={() => productionFileRef.current?.click()}
+                            disabled={productionUploading}
+                            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-4 rounded-lg shadow-md hover:shadow-xl transition-all text-lg font-semibold disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {productionUploading ? (
+                                <>
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                    Processing Production Data...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="w-6 h-6" />
+                                    Upload CO0ISPI Report (.xlsx)
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Result Alert */}
+                    {productionResult && renderAlert(productionResult)}
+
+                    {/* Instructions */}
+                    <div className="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-2">📋 Expected File Format (CO0ISPI):</h3>
+                        <p className="text-sm text-gray-700 mb-2">
+                            Export from SAP using CO0ISPI transaction with the following layout:
+                        </p>
+                        <ul className="text-sm text-gray-700 space-y-1 grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                            <li>• <strong>Order</strong> - Production order number</li>
+                            <li>• <strong>Plant</strong> - Plant code (e.g., 1201)</li>
+                            <li>• <strong>Order Type</strong> - 201S or 201O</li>
+                            <li>• <strong>Material</strong> - Finished good code</li>
+                            <li>• <strong>Sales Order</strong> - For MTO linking</li>
+                            <li>• <strong>Basic Start Date</strong> - Planned start</li>
+                            <li>• <strong>Release Date</strong> - Actual release</li>
+                            <li>• <strong>Actual Finish</strong> - Actual completion</li>
+                            <li>• <strong>Order Qty</strong> - Planned quantity</li>
+                            <li>• <strong>Delivered Qty</strong> - Produced quantity</li>
+                        </ul>
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                                <strong>💡 Smart Import:</strong> Existing orders will be skipped if identical, or updated if details have changed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section C: Update COGS */}
+                <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border border-gray-200">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="bg-amber-100 p-3 rounded-lg">
                             <DollarSign className="w-6 h-6 text-amber-600" />

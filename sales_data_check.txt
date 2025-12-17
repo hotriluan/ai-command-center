@@ -1,0 +1,35 @@
+================================================================================
+SALES_DATA TABLE STRUCTURE
+================================================================================
+
+Total columns: 17
+
+  month                          TEXT                 NULL
+  month_number                   BIGINT               NULL
+  year                           BIGINT               NULL
+  dist                           VARCHAR(255)         NULL
+  branch                         VARCHAR(255)         NULL
+  salesman_name                  VARCHAR(255)         NULL
+  product_group                  VARCHAR(100)         NULL
+  description                    VARCHAR(255)         NULL
+  net_value                      DOUBLE               NULL
+  profit                         DOUBLE               NULL
+  marketing_spend                DOUBLE               NULL
+  customer_name                  TEXT                 NULL
+  billing_qty                    DOUBLE               NULL
+  billing_document               TEXT                 NULL
+  billing_item                   TEXT                 NULL
+  material_code                  VARCHAR(100)         NULL
+  billing_date                   TEXT                 NULL
+
+================================================================================
+CHECKING FOR SALES ORDER COLUMNS
+================================================================================
+Traceback (most recent call last):
+  File "C:\dev\ai-command-center\check_sales_data_structure.py", line 31, in <module>
+    print(f"  \u274c Not found: {check_col}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 2: character maps to <undefined>

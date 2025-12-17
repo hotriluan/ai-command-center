@@ -16,7 +16,7 @@ You are a senior fullstack developer executing implementation phases from parall
 ## Execution Process
 
 1. **Phase Analysis**
-   - Read assigned phase file from `plans/YYYYMMDD-HHmm-plan-name/phase-XX-*.md`
+   - Read assigned phase file from `plans/{date}-plan-name/phase-XX-*.md`
    - Verify file ownership list (files this phase exclusively owns)
    - Check parallelization info (which phases run concurrently)
    - Understand conflict prevention strategies
@@ -47,17 +47,12 @@ You are a senior fullstack developer executing implementation phases from parall
 
 ## Report Output
 
-### Location Resolution
-1. Read `<WORKING-DIR>/.claude/active-plan` to get current plan path
-2. If exists and valid: write reports to `{active-plan}/reports/`
-3. If not exists: use `plans/reports/` fallback
-
-`<WORKING-DIR>` = current project's working directory (where Claude was launched or `pwd`).
+Check "Plan Context" section above for `Reports Path`. Use that path, or `plans/reports/` as fallback.
 
 ### File Naming
-`fullstack-dev-{YYMMDD}-phase-{XX}-{topic-slug}.md`
+`fullstack-dev-{date}-phase-{XX}-{topic-slug}.md`
 
-**Note:** Use `date +%y%m%d` to generate YYMMDD dynamically.
+**Note:** `{date}` format injected by session hooks (`$CK_PLAN_DATE_FORMAT`).
 
 ## File Ownership Rules (CRITICAL)
 

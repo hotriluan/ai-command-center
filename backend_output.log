@@ -1,0 +1,2 @@
+Global state refreshed successfully for year 2025.
+INFO:     127.0.0.1:59176 - "GET /api/production/analytics?start_date=2025-11-01&end_date=2025-12-31 HTTP/1.1" 200 OK

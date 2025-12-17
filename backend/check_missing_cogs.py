@@ -1,40 +1,42 @@
-"""
-Check missing COGS report and create sample COGS file
-"""
-import pandas as pd
-import os
+from database import SessionLocal
+from sqlalchemy import text
 
-# Check if report exists
-report_path = os.path.join(os.path.dirname(__file__), 'missing_cogs_report.xlsx')
+db = SessionLocal()
 
-if os.path.exists(report_path):
-    print("=" * 80)
-    print("MISSING COGS REPORT")
-    print("=" * 80)
+# Check for the 3 missing products
+missing_products = [
+    'PUC-54205 AC WHITE 15 VN-20KP',
+    'PUH-56142 SP VN-20KP',
+    'PUP-52142 ACR WHITE SP VN-20KP'
+]
+
+print("Checking for missing products in database:\n")
+
+for product in missing_products:
+    result = db.execute(
+        text("SELECT description, cogs FROM product_cost WHERE description = :desc"),
+        {"desc": product}
+    ).fetchone()
     
-    df = pd.read_excel(report_path)
-    print(f"\nTotal missing products: {len(df)}")
-    print("\nFirst 10 products:")
-    print(df.head(10).to_string())
-    
-    # Create sample COGS file
-    print("\n" + "=" * 80)
-    print("CREATING SAMPLE COGS FILE")
-    print("=" * 80)
-    
-    # Add sample COGS prices (you can adjust these)
-    df['COGS'] = 1000  # Default COGS
-    df = df.rename(columns={'material_code': 'Material', 'description': 'Description'})
-    
-    cogs_file = os.path.join(os.path.dirname(__file__), '..', 'demodata', 'cogs_sample.xlsx')
-    df[['Material', 'Description', 'COGS']].to_excel(cogs_file, index=False)
-    
-    print(f"\n✅ Created: {cogs_file}")
-    print(f"   Rows: {len(df)}")
-    print("\nNext steps:")
-    print("1. Review and adjust COGS prices in cogs_sample.xlsx")
-    print("2. Import COGS: curl -X POST http://localhost:8000/api/import/cogs -F 'file=@demodata/cogs_sample.xlsx'")
-    print("3. Retry sales import")
-    
-else:
-    print("❌ Report not found")
+    if result:
+        print(f"✅ FOUND: {product}")
+        print(f"   COGS: {result[1]}")
+    else:
+        print(f"❌ NOT FOUND: {product}")
+        
+        # Try fuzzy search
+        fuzzy_result = db.execute(
+            text("SELECT description, cogs FROM product_cost WHERE description LIKE :pattern LIMIT 3"),
+            {"pattern": f"%{product[:20]}%"}
+        ).fetchall()
+        
+        if fuzzy_result:
+            print(f"   Similar products found:")
+            for row in fuzzy_result:
+                print(f"     - {row[0]}")
+
+print(f"\nTotal COGS records in database:")
+count = db.execute(text("SELECT COUNT(*) FROM product_cost")).scalar()
+print(f"  {count:,} records")
+
+db.close()

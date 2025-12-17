@@ -7,13 +7,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Target, Calendar, BarChart3 } from 'lucide-react';
+import { TrendingUp, Target, Calendar, BarChart3, PackageCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
-    BarChart, Bar, ReferenceLine, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+    BarChart, Bar, ReferenceLine, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, LineChart, Line
 } from 'recharts';
 import YearSelector from '../../components/YearSelector';
 import ChatWidget from '../../components/ChatWidget';
+import ProductionInsights from '../../components/ProductionInsights';
+import {
+    fetchProductionAnalytics,
+    type ProductionAnalytics,
+    type ProductionOrder,
+} from '../../services/productionService';
 
 // ============= INTERFACES =============
 
@@ -110,7 +116,7 @@ const AnalyticsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     // Tab state
-    const [activeTab, setActiveTab] = useState<'products' | 'leaderboard' | 'seasonality' | 'channel' | 'credit'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'leaderboard' | 'seasonality' | 'channel' | 'credit' | 'production'>('products');
 
     // Credit Control state
     const [debtData, setDebtData] = useState<DebtOverview | null>(null);
@@ -121,6 +127,20 @@ const AnalyticsPage: React.FC = () => {
     // Channel Analysis state
     const [channelData, setChannelData] = useState<ChannelData | null>(null);
     const [channelLoading, setChannelLoading] = useState(false);
+
+    // Production Analytics state
+    const [productionData, setProductionData] = useState<ProductionAnalytics | null>(null);
+    const [productionLoading, setProductionLoading] = useState(false);
+    const [productionMrpFilter, setProductionMrpFilter] = useState<string>('All');
+    const [productionStartDate, setProductionStartDate] = useState<string>(() => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    });
+    const [productionEndDate, setProductionEndDate] = useState<string>(() => {
+        const now = new Date();
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
+    });
 
     // ============= DATA FETCHING =============
 
@@ -215,6 +235,25 @@ const AnalyticsPage: React.FC = () => {
             fetchChannelData();
         }
     }, [activeTab, selectedYear, selectedSemester]);
+
+    // Fetch production data
+    const fetchProductionData = async () => {
+        setProductionLoading(true);
+        try {
+            const data = await fetchProductionAnalytics(productionStartDate, productionEndDate, productionMrpFilter);
+            setProductionData(data);
+        } catch (error) {
+            console.error('Error fetching production data:', error);
+        } finally {
+            setProductionLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'production') {
+            fetchProductionData();
+        }
+    }, [activeTab, productionStartDate, productionEndDate, productionMrpFilter]);
 
     // Calculate averages for reference lines
     const avgRevenue = productMatrix.length > 0
@@ -346,6 +385,13 @@ const AnalyticsPage: React.FC = () => {
                             }`}
                     >
                         Credit Control
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('production')}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'production' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
+                            }`}
+                    >
+                        Production Insights
                     </button>
                 </div>
 
@@ -830,10 +876,14 @@ const AnalyticsPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Floating Chat Widget */}
-                <ChatWidget />
-            </div>
+                {/* Production Insights Tab - PREMIUM UI */}
+                {activeTab === 'production' && (
+                    <ProductionInsights />
+                )}
+
+            <ChatWidget />
         </div>
+        </div >
     );
 };
 

@@ -10,10 +10,12 @@ import semester_services
 import import_services
 import analytics_services
 import debt_services
+import production_services
+import production_analytics_services
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from database import init_db, SessionLocal
-from models import SalesData, ChatHistory, ProductCost, SalesTarget
+from models import SalesData, ChatHistory, ProductCost, SalesTarget, ProductionOrder
 import os
 from datetime import datetime
 
@@ -407,6 +409,168 @@ def get_available_debt_dates(db: Session = Depends(get_db)):
         }
     except Exception as e:
         print(f"Error getting available dates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================
+# PRODUCTION ANALYTICS ENDPOINTS
+# ============================
+
+@app.post("/api/import/production")
+async def import_production(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """
+    Import production order data from cooispi.xlsx
+    
+    Expected columns:
+    - Order, Plant, Order type, Material Number, Material description
+    - Sales order, Release date (actual), Actual finish date
+    - Batch, MRP controller, Order quantity (GMEIN), Delivered quantity (GMEIN), Unit of measure
+    """
+    try:
+        contents = await file.read()
+        result = import_services.import_production_data(contents, db)
+        return result
+    except Exception as e:
+        print(f"Error in production import: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/production/analytics")
+def get_production_analytics(
+    start_date: str = None,
+    end_date: str = None,
+    order_type: str = None,
+    mrp_filter: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get production lead time and yield analytics with MTO/MTS lifecycle
+    
+    Query params:
+    - start_date: Filter by release date (YYYY-MM-DD)
+    - end_date: Filter by release date (YYYY-MM-DD)
+    - order_type: Filter by order type (201S or 201O)
+    - mrp_filter: Filter by MRP controller (P01, P02, P03)
+    
+    Returns:
+    - summary_metrics: Overall KPIs
+    - order_details: Individual order breakdown with timeline segments
+    - mto_lifecycle: MTO monthly lifecycle (Prep, Production, Delivery)
+    - mts_efficiency: MTS monthly production efficiency
+    """
+    try:
+        result = production_services.get_production_lead_time_analysis(
+            db, start_date, end_date, order_type, mrp_filter
+        )
+        return result
+    except Exception as e:
+        print(f"Error in production analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/production/mrp-performance")
+def get_mrp_performance(db: Session = Depends(get_db)):
+    """
+    Get performance metrics by MRP Controller
+    
+    Returns:
+    - List of MRP controllers with their metrics (lead time, yield, order count)
+    """
+    try:
+        result = production_services.get_mrp_controller_performance(db)
+        return result
+    except Exception as e:
+        print(f"Error in MRP performance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/production/material-analysis")
+def get_material_analysis(top_n: int = 20, db: Session = Depends(get_db)):
+    """
+    Get lead time analysis by material (product)
+    
+    Query params:
+    - top_n: Number of top materials to return (default 20)
+    
+    Returns:
+    - List of materials with lead time metrics
+    """
+    try:
+        result = production_services.get_material_lead_time_analysis(db, top_n)
+        return result
+    except Exception as e:
+        print(f"Error in material analysis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/production/mto-timeline")
+def get_mto_timeline(
+    start_date: str = None,
+    end_date: str = None,
+    mrp_filter: str = "All",
+    db: Session = Depends(get_db)
+):
+    """
+    Get MTO (Make-to-Order) timeline analysis
+    Tracks: SO Date → Release → Finish → Billing
+    
+    Query params:
+    - start_date: Filter by release date (YYYY-MM-DD)
+    - end_date: Filter by release date (YYYY-MM-DD)
+    - mrp_filter: Filter by MRP controller (All, P01, P02, P03)
+    """
+    try:
+        result = production_analytics_services.get_mto_timeline_analysis(
+            db, start_date, end_date, mrp_filter
+        )
+        return result
+    except Exception as e:
+        print(f"Error in MTO timeline analysis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/production/mts-analysis")
+def get_mts_analysis(
+    start_date: str = None,
+    end_date: str = None,
+    mrp_filter: str = "All",
+    db: Session = Depends(get_db)
+):
+    """
+    Get MTS (Make-to-Stock) production efficiency analysis
+    Tracks: Basic Start → Release → Finish
+    
+    Query params:
+    - start_date: Filter by release date (YYYY-MM-DD)
+    - end_date: Filter by release date (YYYY-MM-DD)
+    - mrp_filter: Filter by MRP controller (All, P01, P02, P03)
+    """
+    try:
+        result = production_analytics_services.get_mts_production_analysis(
+            db, start_date, end_date, mrp_filter
+        )
+        return result
+    except Exception as e:
+        print(f"Error in MTS analysis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/production/variance")
+def get_quantity_variance(
+    start_date: str = None,
+    end_date: str = None,
+    order_type: str = "All",
+    db: Session = Depends(get_db)
+):
+    """
+    Get quantity variance analysis
+    Compares Order Qty vs Delivered Qty
+    
+    Query params:
+    - start_date: Filter by release date (YYYY-MM-DD)
+    - end_date: Filter by release date (YYYY-MM-DD)
+    - order_type: Filter by order type (All, 201S, 201O)
+    """
+    try:
+        result = production_analytics_services.get_quantity_variance_analysis(
+            db, start_date, end_date, order_type
+        )
+        return result
+    except Exception as e:
+        print(f"Error in variance analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

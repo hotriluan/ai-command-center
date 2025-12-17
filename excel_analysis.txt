@@ -1,0 +1,113 @@
+================================================================================
+COOISPI.XLSX - Production Orders
+================================================================================
+
+Total rows: 511
+
+Column count: 18
+
+Column names (if headers exist):
+  0: Unnamed: 0
+  1: Unnamed: 1
+  2: Unnamed: 2
+  3: Unnamed: 3
+  4: Unnamed: 4
+  5: Unnamed: 5
+  6: Unnamed: 6
+  7: Unnamed: 7
+  8: Unnamed: 8
+  9: Unnamed: 9
+  10: Unnamed: 10
+  11: Unnamed: 11
+  12: Unnamed: 12
+  13: Unnamed: 13
+  14: Unnamed: 14
+  15: Unnamed: 15
+  16: Unnamed: 16
+  17: Unnamed: 17
+
+First row sample:
+{'Unnamed: 0': 1201, 'Unnamed: 1': nan, 'Unnamed: 2': 10000107761, 'Unnamed: 3': '201S', 'Unnamed: 4': 100000002, 'Unnamed: 5': Timestamp('2025-12-04 00:00:00'), 'Unnamed: 6': Timestamp('2025-12-01 00:00:00'), 'Unnamed: 7': Timestamp('2025-12-03 00:00:00'), 'Unnamed: 8': '11-260 AF PU THINNER-200LK', 'Unnamed: 9': 10, 'Unnamed: 10': '25L2463510', 'Unnamed: 11': 'TECO MSPT PRT  PCNF DLV  PRC  BASC BCRQ*', 'Unnamed: 12': 'P01', 'Unnamed: 13': 8.0, 'Unnamed: 14': 8.0, 'Unnamed: 15': 'PC', 'Unnamed: 16': Timestamp('2025-12-01 00:00:00'), 'Unnamed: 17': Timestamp('2025-12-04 00:00:00')}
+
+================================================================================
+ZRSD0021612.XLSX - Sales Data
+================================================================================
+
+Total rows: 1071
+
+Column count: 65
+
+Column names:
+  0: Billing Date
+  1: Billing Document
+  2: Sloc
+  3: Tax Classification
+  4: TOP
+  5: Billing Type
+  6: Sales Organization
+  7: Sales Office
+  8: Dist Channel
+  9: Sold-to
+  10: Payer
+  11: Bill-to
+  12: Name of Bill to
+  13: Cust. City
+  14: Cust. Group
+  15: Trans. Zone
+  16: Reg Stru. Group
+  17: Ship-to
+  18: Name of Ship-to
+  19: Address of Ship-to
+  20: Usage
+  21: Salesman ID
+  22: Salesman Name
+  23: Billing Item
+  24: Material
+  25: Material Type
+  26: Description
+  27: Item Proposal
+  28: Prod. Hierarchy
+  29: Billing Qty
+  30: Sales Unit
+  31: Curr
+  32: Exchange Rate
+  33: Cust Pricing Proc
+  34: Price
+  35: Total Price
+  36: Discount Item
+  37: Discount (Header)
+  38: DP
+  39: Discount
+  40: Net Value
+  41: Tax
+  42: Total
+  43: Net Weight
+  44: Weight Unit
+  45: Volum
+  46: Volum Unit
+  47: Cust. Formula Reason
+  48: SO No.
+  49: SO Date.
+  50: Doc Reference (OD).
+  51: Cancelled
+  52: Doc. Cancel
+  53: Tonase
+  54: Tonase Unit
+  55: Created By
+  56: Pos. Status
+  57: Ins & Freight (Export)
+  58: Month number
+  59: Month
+  60: Year
+  61: Dist
+  62: PH3
+  63: PH4
+  64: Branch
+
+Key columns check:
+  Γ£à SO No. - Found
+     Non-null values: 1071/1071
+  Γ¥î SO Date - Not found
+  Γ£à Billing Date - Found
+     Non-null values: 1071/1071
+  Γ¥î Sales Order - Not found

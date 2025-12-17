@@ -1,14 +1,16 @@
-import sqlite3
+from database import engine
+from sqlalchemy import inspect
 
-conn = sqlite3.connect('command_center.db')
-cursor = conn.cursor()
+inspector = inspect(engine)
+print('Sales Data Columns:')
+cols = inspector.get_columns('sales_data')
+for i, col in enumerate(cols, 1):
+    nullable = "NULL" if col['nullable'] else "NOT NULL"
+    default = f" DEFAULT {col['default']}" if col.get('default') else ""
+    print(f"{i:2}. {col['name']:20} {str(col['type']):20} {nullable}{default}")
 
-# Get sales_data schema
-cursor.execute("PRAGMA table_info(sales_data)")
-columns = cursor.fetchall()
+print(f"\nTotal columns: {len(cols)}")
 
-print("sales_data columns:")
-for col in columns:
-    print(f"  - {col[1]} ({col[2]})")
-
-conn.close()
+# Check for primary key
+pk = inspector.get_pk_constraint('sales_data')
+print(f"\nPrimary Key: {pk}")
