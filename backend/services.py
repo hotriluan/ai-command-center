@@ -666,21 +666,45 @@ def process_chat(question: str, db: Session):
         SQL Used: "{sql_query}"
         Data Found: "{result}"
         
-        Task: Answer the user's question based on the Data Found.
+Based on the SQL query result, provide a natural language answer to the user's question.
+
+User Question: {question}
+SQL Query: {sql_query}
+Query Result: {result}
+
+Provide a clear, concise answer in Vietnamese. Format numbers with commas for readability.
+If the result is a revenue/sales figure, format it as currency (VND).
+"""
         
-        **LANGUAGE ENFORCEMENT (HARD RULE):**
-        - You MUST ALWAYS respond in ENGLISH, regardless of the language used in the user's query.
-        - If the user asks in Vietnamese, translate your answer internally, but output ONLY in English.
-        - Example: User asks "Doanh thu tháng 10 là bao nhiêu?" -> You respond "The revenue for October is..."
+        print(f"--- [AI] Generating final answer with Gemini ---")
         
-        **Formatting:**
-        - Tone: Professional Business Analyst.
-        - If Data Found is empty, say "No matching data found."
-        - Format currency nicely (e.g., 1.2 billion VND, 500 million VND).
-        """
-        final_answer = model.generate_content(final_prompt).text
+        try:
+            final_answer = model.generate_content(final_prompt).text
+        except Exception as gemini_error:
+            # Handle Gemini API errors (rate limits, etc.)
+            print(f"--- [WARNING] Gemini API error: {gemini_error} ---")
+            
+            # Fallback: Format result directly without AI
+            if result and len(result) > 0:
+                result_value = result[0][0] if result[0][0] is not None else 0
+                
+                # Format as currency if it's a number
+                if isinstance(result_value, (int, float)):
+                    formatted_value = f"{result_value:,.0f} VND"
+                    final_answer = f"Kết quả: {formatted_value}"
+                else:
+                    final_answer = f"Kết quả: {result_value}"
+            else:
+                final_answer = "Không tìm thấy dữ liệu phù hợp."
+            
+            final_answer += "\n\n(Lưu ý: AI đang bận, kết quả được hiển thị trực tiếp từ database)"
         
-        return {"answer": final_answer}
+        return {
+            "status": "success",
+            "answer": final_answer,
+            "sql_query": sql_query,
+            "sql_result": str(result)
+        }
 
     except Exception as e:
         print(f"--- [FATAL ERROR] SQL/Gemini Failed: {e} ---")

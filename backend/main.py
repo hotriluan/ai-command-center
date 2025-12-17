@@ -11,6 +11,9 @@ import import_services
 import analytics_services
 import debt_services
 
+# PHASE 2A: Import cache manager
+from cache_manager import cache, get_cache_key, CACHE_TTL
+
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from database import init_db, SessionLocal
@@ -69,6 +72,11 @@ AI_CONTEXT = {
 def refresh_global_state():
     """Helper to refresh global state from DB using services"""
     global DASHBOARD_DATA, AI_CONTEXT
+    
+    # PHASE 2A: Invalidate all caches on data import
+    cache.invalidate()
+    print("[Cache] Invalidated all caches due to data import")
+    
     db = SessionLocal()
     try:
         # Use year-filtered stats with default year
@@ -94,10 +102,27 @@ def read_root():
 
 @app.get("/api/dashboard")
 def get_dashboard(year: int = None, db: Session = Depends(get_db)):
-    """Get dashboard data filtered by year"""
-    if year:
-        data = year_services.get_dashboard_stats_by_year(db, year)
-        return data if data else DASHBOARD_DATA
+    """Get dashboard data filtered by year with caching (PHASE 2A)"""
+    
+    # Determine year
+    if not year:
+        year = year_services.get_default_year(db)
+    
+    # Try cache first
+    cache_key = get_cache_key('dashboard', year=year)
+    cached_data = cache.get(cache_key)
+    
+    if cached_data:
+        return cached_data
+    
+    # Cache miss - query database
+    data = year_services.get_dashboard_stats_by_year(db, year)
+    
+    # Cache result with 15-minute TTL
+    if data:
+        cache.set(cache_key, data, ttl=CACHE_TTL['dashboard'])
+        return data
+    
     return DASHBOARD_DATA
 
 @app.get("/api/available-years")
@@ -112,10 +137,25 @@ def get_available_years(db: Session = Depends(get_db)):
 
 @app.get("/api/performance/semester")
 def get_semester_performance(year: int = None, db: Session = Depends(get_db)):
-    """Get sales performance grouped by semester"""
+    """Get sales performance grouped by semester with caching (PHASE 2A)"""
+    
     if year is None:
         year = year_services.get_default_year(db)
-    return semester_services.get_performance_by_semester(db, year)
+    
+    # Try cache first
+    cache_key = get_cache_key('semester_performance', year=year)
+    cached_data = cache.get(cache_key)
+    
+    if cached_data:
+        return cached_data
+    
+    # Cache miss - query database
+    data = semester_services.get_performance_by_semester(db, year)
+    
+    # Cache with 10-minute TTL
+    cache.set(cache_key, data, ttl=CACHE_TTL['analytics'])
+    
+    return data
 
 
 @app.post("/api/upload-cogs")
@@ -286,12 +326,24 @@ async def download_missing_cogs_report():
 @app.get("/api/analytics/product-matrix")
 def get_product_matrix(year: int = None, semester: int = None, db: Session = Depends(get_db)):
     """
-    Product Portfolio Matrix - Bubble Chart
+    Product Portfolio Matrix - Bubble Chart with caching (PHASE 2A)
     Returns: Revenue (x), Profit Margin % (y), Quantity (z), Product Name
     Supports semester filtering: None (whole year), 1 (Jan-Jun), 2 (Jul-Dec)
     """
     try:
+        # Try cache first
+        cache_key = get_cache_key('product_matrix', year=year, semester=semester)
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return {"status": "success", "data": cached_data}
+        
+        # Cache miss - query database
         data = analytics_services.get_product_matrix(db, year, semester)
+        
+        # Cache with 10-minute TTL
+        cache.set(cache_key, data, ttl=CACHE_TTL['analytics'])
+        
         return {"status": "success", "data": data}
     except Exception as e:
         print(f"Error in product-matrix: {e}")
@@ -300,12 +352,24 @@ def get_product_matrix(year: int = None, semester: int = None, db: Session = Dep
 @app.get("/api/analytics/target-waterfall")
 def get_target_waterfall(year: int = None, semester: int = None, db: Session = Depends(get_db)):
     """
-    Target Variance Waterfall Chart
+    Target Variance Waterfall Chart with caching (PHASE 2A)
     Shows how each salesperson contributed to target achievement
     Supports semester filtering: None (whole year), 1 (Jan-Jun), 2 (Jul-Dec)
     """
     try:
+        # Try cache first
+        cache_key = get_cache_key('target_waterfall', year=year, semester=semester)
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return {"status": "success", "data": cached_data}
+        
+        # Cache miss - query database
         data = analytics_services.get_target_waterfall(db, year, semester)
+        
+        # Cache with 10-minute TTL
+        cache.set(cache_key, data, ttl=CACHE_TTL['analytics'])
+        
         return {"status": "success", "data": data}
     except Exception as e:
         print(f"Error in target-waterfall: {e}")
@@ -363,6 +427,10 @@ async def import_debt_report(
         # Import data
         result = debt_services.import_debt_data(contents, db, report_date)
         
+        # PHASE 2A: Invalidate debt caches on import
+        cache.invalidate('debt')
+        print("[Cache] Invalidated debt caches due to debt report import")
+        
         return result
     except Exception as e:
         print(f"Error importing debt report: {e}")
@@ -371,11 +439,23 @@ async def import_debt_report(
 @app.get("/api/debt/overview")
 def get_debt_overview(report_date: str = None, db: Session = Depends(get_db)):
     """
-    Get debt overview with KPIs and breakdowns
+    Get debt overview with KPIs and breakdowns with caching (PHASE 2A)
     Smart date defaulting: Uses latest report_date if not provided
     """
     try:
+        # Try cache first
+        cache_key = get_cache_key('debt_overview', report_date=report_date or 'latest')
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return cached_data
+        
+        # Cache miss - query database
         data = debt_services.get_debt_overview(db, report_date)
+        
+        # Cache with 30-minute TTL (debt data changes infrequently)
+        cache.set(cache_key, data, ttl=CACHE_TTL['debt'])
+        
         return data
     except Exception as e:
         print(f"Error in debt overview: {e}")

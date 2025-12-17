@@ -9,8 +9,14 @@ engine = create_engine(
     DATABASE_URL,
     pool_size=10,
     max_overflow=20,
-    pool_recycle=3600
+    pool_recycle=3600,
+    echo=False  # Set to True for SQL debugging
 )
+
+# PHASE 2C: Setup query logging
+import query_logging
+query_logging.setup_query_logging(engine)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
