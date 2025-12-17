@@ -94,23 +94,4 @@ class ARAgingReport(Base):
     debt_121_180 = Column(Float, default=0)
     debt_over_180 = Column(Float, default=0)
 
-class ProductionOrder(Base):
-    __tablename__ = "production_orders"
 
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(String(50), unique=True, nullable=False, index=True)  # Production Order Number
-    plant = Column(String(50), nullable=True)
-    order_type = Column(String(20), nullable=True)  # 201S (MTS) or 201O (MTO)
-    material_code = Column(String(50), nullable=True, index=True)
-    material_description = Column(String(500), nullable=True)
-    sales_order_id = Column(String(50), nullable=True, index=True)  # JOIN KEY with sales_data
-    basic_start_date = Column(Date, nullable=True)  # Basic start date
-    release_date = Column(Date, nullable=True)  # Release date (actual)
-    actual_finish_date = Column(Date, nullable=True)  # Actual finish date
-    batch = Column(String(50), nullable=True)
-    bom_alternative = Column(String(20), nullable=True)  # BOM alternative
-    system_status = Column(String(100), nullable=True)  # System status
-    mrp_controller = Column(String(50), nullable=True)
-    order_qty = Column(Float, nullable=True)  # Order quantity
-    delivered_qty = Column(Float, nullable=True)  # Delivered quantity
-    unit = Column(String(20), nullable=True)  # Unit of measure

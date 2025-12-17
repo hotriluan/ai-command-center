@@ -14,12 +14,7 @@ import {
 } from 'recharts';
 import YearSelector from '../../components/YearSelector';
 import ChatWidget from '../../components/ChatWidget';
-import ProductionInsights from '../../components/ProductionInsights';
-import {
-    fetchProductionAnalytics,
-    type ProductionAnalytics,
-    type ProductionOrder,
-} from '../../services/productionService';
+
 
 // ============= INTERFACES =============
 
@@ -108,7 +103,11 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 const AnalyticsPage: React.FC = () => {
     // State management
-    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+    const [selectedYear, setSelectedYear] = useState<number>(2025);
+
+    useEffect(() => {
+        setSelectedYear(new Date().getFullYear());
+    }, []);
     const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
     const [productMatrix, setProductMatrix] = useState<ProductMatrixData[]>([]);
     const [leaderboard, setLeaderboard] = useState<LeaderboardData[]>([]);
@@ -116,7 +115,7 @@ const AnalyticsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     // Tab state
-    const [activeTab, setActiveTab] = useState<'products' | 'leaderboard' | 'seasonality' | 'channel' | 'credit' | 'production'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'leaderboard' | 'seasonality' | 'channel' | 'credit'>('products');
 
     // Credit Control state
     const [debtData, setDebtData] = useState<DebtOverview | null>(null);
@@ -128,19 +127,7 @@ const AnalyticsPage: React.FC = () => {
     const [channelData, setChannelData] = useState<ChannelData | null>(null);
     const [channelLoading, setChannelLoading] = useState(false);
 
-    // Production Analytics state
-    const [productionData, setProductionData] = useState<ProductionAnalytics | null>(null);
-    const [productionLoading, setProductionLoading] = useState(false);
-    const [productionMrpFilter, setProductionMrpFilter] = useState<string>('All');
-    const [productionStartDate, setProductionStartDate] = useState<string>(() => {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-    });
-    const [productionEndDate, setProductionEndDate] = useState<string>(() => {
-        const now = new Date();
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        return `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
-    });
+
 
     // ============= DATA FETCHING =============
 
@@ -236,24 +223,7 @@ const AnalyticsPage: React.FC = () => {
         }
     }, [activeTab, selectedYear, selectedSemester]);
 
-    // Fetch production data
-    const fetchProductionData = async () => {
-        setProductionLoading(true);
-        try {
-            const data = await fetchProductionAnalytics(productionStartDate, productionEndDate, productionMrpFilter);
-            setProductionData(data);
-        } catch (error) {
-            console.error('Error fetching production data:', error);
-        } finally {
-            setProductionLoading(false);
-        }
-    };
 
-    useEffect(() => {
-        if (activeTab === 'production') {
-            fetchProductionData();
-        }
-    }, [activeTab, productionStartDate, productionEndDate, productionMrpFilter]);
 
     // Calculate averages for reference lines
     const avgRevenue = productMatrix.length > 0
@@ -386,13 +356,7 @@ const AnalyticsPage: React.FC = () => {
                     >
                         Credit Control
                     </button>
-                    <button
-                        onClick={() => setActiveTab('production')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'production' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
-                            }`}
-                    >
-                        Production Insights
-                    </button>
+
                 </div>
 
                 {/* Product Portfolio Matrix Tab */}
@@ -407,36 +371,38 @@ const AnalyticsPage: React.FC = () => {
                                 <p className="text-sm text-gray-600">Top 50 Products: Revenue vs Profit Margin (bubble size = quantity)</p>
                             </div>
                         </div>
-                        <ResponsiveContainer width="100%" height={500}>
-                            <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis
-                                    type="number"
-                                    dataKey="revenue"
-                                    name="Revenue"
-                                    label={{ value: 'Revenue (VND)', position: 'insideBottom', offset: -10 }}
-                                    tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`}
-                                />
-                                <YAxis
-                                    type="number"
-                                    dataKey="margin"
-                                    name="Margin"
-                                    label={{ value: 'Profit Margin (%)', angle: -90, position: 'insideLeft' }}
-                                />
-                                <ReferenceLine x={avgRevenue} stroke="#94a3b8" strokeDasharray="5 5" label="Avg Revenue" />
-                                <ReferenceLine y={avgMargin} stroke="#94a3b8" strokeDasharray="5 5" label="Avg Margin" />
-                                <Tooltip content={<BubbleTooltip />} />
-                                <Legend />
-                                <Scatter name="Products" data={productMatrix} fill="#8884d8">
-                                    {productMatrix.map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={entry.margin > 20 ? '#10b981' : entry.margin > 10 ? '#f59e0b' : '#ef4444'}
-                                        />
-                                    ))}
-                                </Scatter>
-                            </ScatterChart>
-                        </ResponsiveContainer>
+                        <div style={{ width: '100%', height: 500 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis
+                                        type="number"
+                                        dataKey="revenue"
+                                        name="Revenue"
+                                        label={{ value: 'Revenue (VND)', position: 'insideBottom', offset: -10 }}
+                                        tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`}
+                                    />
+                                    <YAxis
+                                        type="number"
+                                        dataKey="margin"
+                                        name="Margin"
+                                        label={{ value: 'Profit Margin (%)', angle: -90, position: 'insideLeft' }}
+                                    />
+                                    <ReferenceLine x={avgRevenue} stroke="#94a3b8" strokeDasharray="5 5" label="Avg Revenue" />
+                                    <ReferenceLine y={avgMargin} stroke="#94a3b8" strokeDasharray="5 5" label="Avg Margin" />
+                                    <Tooltip content={<BubbleTooltip />} />
+                                    <Legend />
+                                    <Scatter name="Products" data={productMatrix} fill="#8884d8">
+                                        {productMatrix.map((entry, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={entry.margin > 20 ? '#10b981' : entry.margin > 10 ? '#f59e0b' : '#ef4444'}
+                                            />
+                                        ))}
+                                    </Scatter>
+                                </ScatterChart>
+                            </ResponsiveContainer>
+                        </div>
                         <div className="mt-4 flex gap-4 text-sm">
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 bg-green-500 rounded-full"></div>
@@ -467,23 +433,25 @@ const AnalyticsPage: React.FC = () => {
                             </div>
                         </div>
                         {leaderboard.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={Math.max(400, leaderboard.length * 50)}>
-                                <BarChart data={leaderboard} layout="vertical" margin={{ top: 20, right: 80, left: 120, bottom: 20 }}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" label={{ value: 'Achievement %', position: 'insideBottom', offset: -10 }} />
-                                    <YAxis type="category" dataKey="name" width={110} />
-                                    <Tooltip content={<LeaderboardTooltip />} />
-                                    <Legend />
-                                    <Bar dataKey="achievement_rate" name="Achievement %" radius={[0, 8, 8, 0]}>
-                                        {leaderboard.map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={entry.status === 'success' ? '#10b981' : entry.status === 'warning' ? '#f59e0b' : '#ef4444'}
-                                            />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <div style={{ width: '100%', height: Math.max(400, leaderboard.length * 50) }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={leaderboard} layout="vertical" margin={{ top: 20, right: 80, left: 120, bottom: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" label={{ value: 'Achievement %', position: 'insideBottom', offset: -10 }} />
+                                        <YAxis type="category" dataKey="name" width={110} />
+                                        <Tooltip content={<LeaderboardTooltip />} />
+                                        <Legend />
+                                        <Bar dataKey="achievement_rate" name="Achievement %" radius={[0, 8, 8, 0]}>
+                                            {leaderboard.map((entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={entry.status === 'success' ? '#10b981' : entry.status === 'warning' ? '#f59e0b' : '#ef4444'}
+                                                />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         ) : (
                             <p className="text-center text-gray-500 py-8">No leaderboard data available</p>
                         )}
@@ -503,22 +471,24 @@ const AnalyticsPage: React.FC = () => {
                             </div>
                         </div>
                         {seasonality.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={seasonality} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis
-                                        dataKey="month"
-                                        tickFormatter={(month) => MONTH_NAMES[month - 1]}
-                                    />
-                                    <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
-                                    <Tooltip
-                                        formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`}
-                                        labelFormatter={(month) => MONTH_NAMES[month - 1]}
-                                    />
-                                    <Legend />
-                                    <Bar dataKey="revenue" fill="#8b5cf6" name="Revenue" radius={[8, 8, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <div style={{ width: '100%', height: 400 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={seasonality} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tickFormatter={(month) => MONTH_NAMES[month - 1]}
+                                        />
+                                        <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
+                                        <Tooltip
+                                            formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`}
+                                            labelFormatter={(month) => MONTH_NAMES[month - 1]}
+                                        />
+                                        <Legend />
+                                        <Bar dataKey="revenue" fill="#8b5cf6" name="Revenue" radius={[8, 8, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         ) : (
                             <p className="text-center text-gray-500 py-8">No seasonality data available</p>
                         )}
@@ -568,42 +538,46 @@ const AnalyticsPage: React.FC = () => {
                                     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
                                         <h3 className="text-xl font-bold text-gray-900 mb-4">Channel Performance Radar</h3>
                                         <p className="text-sm text-gray-600 mb-4">Normalized comparison across metrics (0-100 scale)</p>
-                                        <ResponsiveContainer width="100%" height={350}>
-                                            <RadarChart data={channelData.radar_data}>
-                                                <PolarGrid />
-                                                <PolarAngleAxis dataKey="channel" />
-                                                <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                                                <Radar name="Revenue" dataKey="Revenue" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
-                                                <Radar name="Profit" dataKey="Profit" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                                                <Radar name="Volume" dataKey="Volume" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.3} />
-                                                <Legend />
-                                                <Tooltip />
-                                            </RadarChart>
-                                        </ResponsiveContainer>
+                                        <div style={{ width: '100%', height: 350 }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <RadarChart data={channelData.radar_data}>
+                                                    <PolarGrid />
+                                                    <PolarAngleAxis dataKey="channel" />
+                                                    <PolarRadiusAxis angle={90} domain={[0, 100]} />
+                                                    <Radar name="Revenue" dataKey="Revenue" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
+                                                    <Radar name="Profit" dataKey="Profit" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
+                                                    <Radar name="Volume" dataKey="Volume" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.3} />
+                                                    <Legend />
+                                                    <Tooltip />
+                                                </RadarChart>
+                                            </ResponsiveContainer>
+                                        </div>
                                     </div>
 
                                     {/* Stacked Bar Chart */}
                                     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
                                         <h3 className="text-xl font-bold text-gray-900 mb-4">Monthly Revenue Trend</h3>
                                         <p className="text-sm text-gray-600 mb-4">Revenue contribution by channel over time</p>
-                                        <ResponsiveContainer width="100%" height={350}>
-                                            <BarChart data={channelData.monthly_trend} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                                                <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis
-                                                    dataKey="month"
-                                                    tickFormatter={(month) => MONTH_NAMES[month - 1]}
-                                                />
-                                                <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
-                                                <Tooltip
-                                                    formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`}
-                                                    labelFormatter={(month) => MONTH_NAMES[month - 1]}
-                                                />
-                                                <Legend />
-                                                <Bar dataKey="Industry" stackId="a" fill="#3b82f6" />
-                                                <Bar dataKey="Retail" stackId="a" fill="#10b981" />
-                                                <Bar dataKey="Project" stackId="a" fill="#8b5cf6" />
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                        <div style={{ width: '100%', height: 350 }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={channelData.monthly_trend} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis
+                                                        dataKey="month"
+                                                        tickFormatter={(month) => MONTH_NAMES[month - 1]}
+                                                    />
+                                                    <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
+                                                    <Tooltip
+                                                        formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`}
+                                                        labelFormatter={(month) => MONTH_NAMES[month - 1]}
+                                                    />
+                                                    <Legend />
+                                                    <Bar dataKey="Industry" stackId="a" fill="#3b82f6" />
+                                                    <Bar dataKey="Retail" stackId="a" fill="#10b981" />
+                                                    <Bar dataKey="Project" stackId="a" fill="#8b5cf6" />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -732,17 +706,19 @@ const AnalyticsPage: React.FC = () => {
                                 {/* Row 2: Collection Efficiency Chart */}
                                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
                                     <h3 className="text-xl font-bold text-gray-900 mb-4">Collection Efficiency by Channel</h3>
-                                    <ResponsiveContainer width="100%" height={350}>
-                                        <BarChart data={debtData.channel_breakdown} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="channel" />
-                                            <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
-                                            <Tooltip formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`} />
-                                            <Legend />
-                                            <Bar dataKey="outstanding" fill="#ff4d4f" name="Outstanding" radius={[8, 8, 0, 0]} />
-                                            <Bar dataKey="collected" fill="#52c41a" name="Collected" radius={[8, 8, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                    <div style={{ width: '100%', height: 350 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={debtData.channel_breakdown} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="channel" />
+                                                <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
+                                                <Tooltip formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`} />
+                                                <Legend />
+                                                <Bar dataKey="outstanding" fill="#ff4d4f" name="Outstanding" radius={[8, 8, 0, 0]} />
+                                                <Bar dataKey="collected" fill="#52c41a" name="Collected" radius={[8, 8, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
                                 </div>
 
                                 {/* Row 3: Aging Structure + Top Debtors */}
@@ -750,19 +726,21 @@ const AnalyticsPage: React.FC = () => {
                                     {/* Aging Structure */}
                                     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
                                         <h3 className="text-xl font-bold text-gray-900 mb-4">Aging Structure</h3>
-                                        <ResponsiveContainer width="100%" height={300}>
-                                            <BarChart data={Object.entries(debtData.aging_breakdown).map(([name, value]) => ({ name, value }))} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                                <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
-                                                <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
-                                                <Tooltip formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`} />
-                                                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                                                    {Object.keys(debtData.aging_breakdown).map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={['#52c41a', '#73d13d', '#faad14', '#ff7a45', '#ff4d4f', '#cf1322'][index]} />
-                                                    ))}
-                                                </Bar>
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                        <div style={{ width: '100%', height: 300 }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={Object.entries(debtData.aging_breakdown).map(([name, value]) => ({ name, value }))} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                                                    <YAxis tickFormatter={(value) => `${(value / 1e9).toFixed(1)}B`} />
+                                                    <Tooltip formatter={(value: number) => `${(value / 1e9).toFixed(2)}B VND`} />
+                                                    <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                                                        {Object.keys(debtData.aging_breakdown).map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={['#52c41a', '#73d13d', '#faad14', '#ff7a45', '#ff4d4f', '#cf1322'][index]} />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
                                     </div>
 
                                     {/* Top 10 Debtors Table */}
@@ -876,13 +854,10 @@ const AnalyticsPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Production Insights Tab - PREMIUM UI */}
-                {activeTab === 'production' && (
-                    <ProductionInsights />
-                )}
 
-            <ChatWidget />
-        </div>
+
+                <ChatWidget />
+            </div>
         </div >
     );
 };
